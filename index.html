@@ -92,7 +92,7 @@ body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; ri
 
 <div id="adminSection" class="section bg-white/80 backdrop-blur rounded-[35px] p-6 shadow-xl mt-6">
 <h2 class="text-4xl font-black mb-6">🌷 Admin Panel</h2>
-<p class="text-gray-600 mb-4 bg-yellow-50 p-3 rounded-xl border border-yellow-200">💡 <b>Mẹo:</b> Khi bấm Sửa tên một người, hệ thống sẽ tự động cập nhật tên mới cho người đó ở tất cả các bông hoa họ đang có!</p>
+<p class="text-gray-600 mb-4 bg-yellow-50 p-3 rounded-xl border border-yellow-200">💡 <b>Tính năng mới:</b> Xem danh sách kho hoa ở dưới, bạn có thể <b>Sửa tên</b> hoặc <b>Xóa hẳn</b> từng thành viên riêng lẻ ra khỏi bông hoa đó!</p>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 <input id="memberName" placeholder="🎮 Tên ingame thành viên" class="border rounded-2xl p-4"/>
 <input id="memberZalo" placeholder="💬 Tên zalo" class="border rounded-2xl p-4"/>
@@ -106,7 +106,7 @@ body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; ri
 <button onclick="clearAllFlowers()" class="bg-red-500 text-white px-8 py-4 rounded-2xl font-black text-xl shadow-lg">🗑️ Xóa toàn bộ dữ liệu</button>
 </div>
 <hr class="my-8"><h3 class="text-3xl font-black mb-5">📦 Dữ liệu kho hoa</h3>
-<div id="adminFlowerList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+<div id="adminFlowerList" class="grid grid-cols-1 gap-6"></div>
 </div>
 
 <div id="memberFlowerModal" class="modal">
@@ -238,72 +238,101 @@ function renderMembers(){
     </button>`).join('');
 }
 
+// ========================================================
+// HÀM HIỂN THỊ ADMIN MỚI: LIỆT KÊ CHI TIẾT TỪNG NGƯỜI TRONG HOA
+// ========================================================
 function renderAdminFlowers(){
   const list = document.getElementById('adminFlowerList'); if(!list) return;
-  list.innerHTML = flowers.map((f,index)=>`
-    <div class="${rarityClass(f.rarity)} rounded-3xl p-5 shadow-lg">
-      <div class="flex items-center gap-4">
-        <img src="${f.image}" class="w-16 h-16 object-contain"/>
+  
+  // Lấy dữ liệu đã được gộp theo hoa để hiển thị trực quan cho Admin dễ xóa/sửa
+  const merged = mergedFlowers();
+  
+  list.innerHTML = merged.map((f, fIndex)=>`
+    <div class="${rarityClass(f.rarity)} rounded-3xl p-6 shadow-lg border border-gray-100">
+      <div class="flex items-center gap-5 border-b border-gray-200/60 pb-4 mb-4">
+        <img src="${f.image}" class="w-20 h-20 object-contain bg-white/60 p-1 rounded-2xl shadow-sm"/>
         <div class="flex-1 min-w-0">
-          <div class="text-xl font-black uppercase truncate">${f.name}</div>
-          <div class="mt-1 font-bold text-teal-800 text-sm truncate">🎮 Chủ: ${f.owners && f.owners[0] ? f.owners[0].ingame : ''}</div>
+          <div class="text-2xl font-black text-[#3a2518] uppercase">${f.name}</div>
+          <div class="text-sm font-bold text-gray-500 mt-1">${f.rarity} • ${f.flowerXu ? '🪙 Hoa xu' : '🎁 Hoa gói'}</div>
         </div>
+        <button onclick="deleteEntireFlower('${f.name.replace(/'/g, "\\'")}')" class="bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-sm font-black hover:bg-red-100 transition">🗑️ Xóa sạch hoa này</button>
       </div>
-      <div class="flex gap-2 mt-4">
-        <button onclick="editFlower(${index})" class="flex-1 bg-yellow-400 text-black py-2 rounded-xl font-black text-sm">✏️ Sửa tên</button>
-        <button onclick="deleteFlower(${index})" class="flex-1 bg-red-500 text-white py-2 rounded-xl font-black text-sm">🗑️ Xóa</button>
+      
+      <div>
+        <div class="text-xs font-black text-gray-400 uppercase tracking-wider mb-2">Danh sách thành viên sở hữu bông này:</div>
+        <div class="space-y-2">
+          ${(f.owners && f.owners.length > 0) ? f.owners.map((owner, oIndex) => `
+            <div class="flex items-center justify-between bg-white/70 backdrop-blur-sm p-3 rounded-2xl border border-pink-100/40 shadow-sm">
+              <div class="truncate mr-2">
+                <span class="font-black text-teal-900">🎮 Ingame: ${owner.ingame}</span>
+                ${owner.zalo ? `<span class="text-xs text-gray-500 ml-2">(💬 Zalo: ${owner.zalo})</span>` : ''}
+              </div>
+              <div class="flex gap-2 flex-shrink-0">
+                <button onclick="editSingleMember('${f.name.replace(/'/g, "\\'")}', '${owner.ingame.replace(/'/g, "\\'")}')" class="bg-yellow-400 text-black px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm">✏️ Sửa tên</button>
+                <button onclick="deleteSingleMember('${f.name.replace(/'/g, "\\'")}', '${owner.ingame.replace(/'/g, "\\'")}')" class="bg-red-500 text-white px-3 py-1.5 rounded-xl font-bold text-xs shadow-sm">❌ Xóa người này</button>
+              </div>
+            </div>
+          `).join('') : '<p class="text-sm text-gray-400 italic">Chưa có ai sở hữu.</p>'}
+        </div>
       </div>
     </div>`).join('');
 }
 
-function deleteFlower(index){ if(confirm('Xóa hoa này?')){ flowers.splice(index,1); saveData(); renderSearch(); renderMembers(); renderAdminFlowers(); } }
-
-// ==========================================
-// HÀM MỚI: SỬA TÊN THÀNH VIÊN ĐỒNG LOẠT Ở MỌI BÔNG HOA
-// ==========================================
-function editFlower(index){
-  const f = flowers[index];
-  const currentIngame = f.owners && f.owners[0] ? f.owners[0].ingame : '';
-  const currentZalo = f.owners && f.owners[0] ? f.owners[0].zalo : '';
+// HÀM MỚI: SỬA TÊN 1 THÀNH VIÊN ĐÃ CHỌN
+function editSingleMember(flowerName, oldIngame) {
+  const newIngame = prompt(`Sửa tên Ingame cho thành viên này:`, oldIngame);
+  if(!newIngame || newIngame.trim() === "") return;
   
-  const newName = prompt('Sửa tên hoa (Bỏ qua nếu chỉ sửa tên người)', f.name); 
-  if(newName === null) return;
-  
-  const newIngame = prompt('Nhập TÊN INGAME mới chính xác:', currentIngame); 
-  if(newIngame === null) return;
-  
-  const newZalo = prompt('Nhập TÊN ZALO mới (nếu có):', currentZalo); 
-  if(newZalo === null) return;
-
-  // Lấy tên ingame cũ để làm gốc quét tìm kiếm đồng loạt
-  const oldIngameLower = currentIngame.trim().toLowerCase();
-
-  // Quét toàn bộ hệ thống dữ liệu để đổi tên cho thành viên này ở tất cả các bông hoa họ có
-  flowers.forEach(flower => {
-    if(flower.owners && Array.isArray(flower.owners)) {
-      flower.owners.forEach(owner => {
-        if(owner.ingame && owner.ingame.trim().toLowerCase() === oldIngameLower) {
-          owner.ingame = newIngame.trim();
-          owner.zalo = newZalo.trim();
-        }
+  const targetFlower = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
+  if(targetFlower && targetFlower.owners) {
+    const ownerObj = targetFlower.owners.find(o => o.ingame.trim().toLowerCase() === oldIngame.toLowerCase());
+    if(ownerObj) {
+      const newZalo = prompt(`Sửa tên Zalo cho thành viên này (Bỏ trống nếu không có):`, ownerObj.zalo || '');
+      ownerObj.ingame = newIngame.trim();
+      ownerObj.zalo = newZalo ? newZalo.trim() : '';
+      
+      saveData().then(() => {
+        renderSearch(); renderMembers(); renderAdminFlowers();
+        alert("Đã cập nhật tên thành viên thành công! 🌸");
       });
     }
-  });
-
-  // Cập nhật riêng cho bông hoa đang chọn sửa
-  f.name = newName.trim();
-  if(!f.owners || !Array.isArray(f.owners)) { f.owners = []; }
-  if(f.owners.length === 0) { f.owners.push({ ingame: '', zalo: '' }); }
-  f.owners[0].ingame = newIngame.trim(); 
-  f.owners[0].zalo = newZalo.trim();
-
-  saveData().then(() => {
-    renderSearch(); renderMembers(); renderAdminFlowers();
-    alert('Đã cập nhật đổi tên thành viên đồng loạt thành công! 🌸');
-  });
+  }
 }
 
-function clearAllFlowers(){ if(confirm('Bạn có chắc muốn xóa TOÀN BỘ dữ liệu?')){ flowers = []; localStorage.removeItem('dvdFlowers'); saveData(); renderSearch(); renderMembers(); renderAdminFlowers(); alert('Đã xóa toàn bộ dữ liệu 🌸'); } }
+// HÀM MỚI: XÓA HẲN 1 THÀNH VIÊN RA KHỎI BÔNG HOA ĐÓ
+function deleteSingleMember(flowerName, ingameName) {
+  if(confirm(`Bạn có chắc muốn xóa thành viên "${ingameName}" ra khỏi bông hoa "${flowerName.toUpperCase()}" không?`)) {
+    // Tìm bông hoa gốc trên hệ thống dữ liệu
+    const targetFlower = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
+    if(targetFlower && targetFlower.owners) {
+      // Lọc bỏ thành viên được chọn xóa
+      targetFlower.owners = targetFlower.owners.filter(o => o.ingame.trim().toLowerCase() !== ingameName.toLowerCase());
+      
+      // Nếu sau khi xóa, hoa này không còn ai sở hữu nữa thì xóa luôn hoa khỏi dữ liệu cho sạch kho
+      if(targetFlower.owners.length === 0) {
+        flowers = flowers.filter(f => f.name.trim().toUpperCase() !== flowerName.toUpperCase());
+      }
+      
+      saveData().then(() => {
+        renderSearch(); renderMembers(); renderAdminFlowers();
+        alert(`Đã xóa thành viên khỏi hoa thành công! 🌸`);
+      });
+    }
+  }
+}
+
+// HÀM XÓA SẠCH HOÀN TOÀN MỘT LOẠI HOA
+function deleteEntireFlower(flowerName) {
+  if(confirm(`Bạn có chắc muốn xóa HOÀN TOÀN hoa "${flowerName.toUpperCase()}" kèm theo tất cả người sở hữu nó không?`)) {
+    flowers = flowers.filter(f => f.name.trim().toUpperCase() !== flowerName.toUpperCase());
+    saveData().then(() => {
+      renderSearch(); renderMembers(); renderAdminFlowers();
+      alert("Đã xóa hoàn toàn loại hoa này! 🌸");
+    });
+  }
+}
+
+function clearAllFlowers(){ if(confirm('Bạn có chắc muốn xóa TOÀN BỘ dữ liệu trên hệ thống không?')){ flowers = []; localStorage.removeItem('dvdFlowers'); saveData(); renderSearch(); renderMembers(); renderAdminFlowers(); alert('Đã xóa toàn bộ dữ liệu 🌸'); } }
 
 function addFlower(){
   const ingame = document.getElementById('memberName').value.trim();
