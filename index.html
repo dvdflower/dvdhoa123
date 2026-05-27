@@ -92,11 +92,11 @@ body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; ri
 
 <div id="adminSection" class="section bg-white/80 backdrop-blur rounded-[35px] p-6 shadow-xl mt-6">
 <h2 class="text-4xl font-black mb-6">🌷 Admin Panel</h2>
-<p class="text-gray-600 mb-4 bg-yellow-50 p-3 rounded-xl border border-yellow-200">💡 <b>Mẹo:</b> Để thêm thành viên mới vào hoa cũ, bạn chỉ cần nhập <b>Đúng chính xác tên hoa cũ</b>. Nếu là hoa cũ, bạn không cần chọn lại file ảnh nữa!</p>
+<p class="text-gray-600 mb-4 bg-yellow-50 p-3 rounded-xl border border-yellow-200">💡 <b>Mẹo:</b> Khi bấm Sửa tên một người, hệ thống sẽ tự động cập nhật tên mới cho người đó ở tất cả các bông hoa họ đang có!</p>
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 <input id="memberName" placeholder="🎮 Tên ingame thành viên" class="border rounded-2xl p-4"/>
 <input id="memberZalo" placeholder="💬 Tên zalo" class="border rounded-2xl p-4"/>
-<input id="flowerName" placeholder="🌸 Tên hoa (Nhập chuẩn tên nếu là hoa cũ)" class="border rounded-2xl p-4"/>
+<input id="flowerName" placeholder="🌸 Tên hoa" class="border rounded-2xl p-4"/>
 <select id="flowerType" class="border rounded-2xl p-4"><option value="xu">🌸 Hoa xu</option><option value="goi">🪙 Hoa gói</option></select>
 <select id="flowerRarity" class="border rounded-2xl p-4"><option>HOA ĐỎ</option><option>HOA CAM</option><option>HOA TÍM</option><option>HOA LAM</option><option>HOA LỤC</option></select>
 <input id="flowerImage" type="file" accept="image/*" class="border rounded-2xl p-4"/>
@@ -171,7 +171,7 @@ function renderSearch(data=mergedFlowers()){
 function searchFlowers(){
   const key = document.getElementById('searchInput').value.toLowerCase().trim(); const rarity = document.getElementById('rarityFilter').value;
   let data = mergedFlowers();
-  if(key){ data = data.filter(f=> f.name.toLowerCase().includes(key) || (f.owners && f.owners.some(o=> o.ingame && o.toLowerCase().includes(key))) ); }
+  if(key){ data = data.filter(f=> f.name.toLowerCase().includes(key) || (f.owners && f.owners.some(o=> o.ingame && o.ingame.toLowerCase().includes(key))) ); }
   if(rarity){ data = data.filter(f=> f.rarity === rarity); }
   renderSearch(data);
 }
@@ -250,7 +250,7 @@ function renderAdminFlowers(){
         </div>
       </div>
       <div class="flex gap-2 mt-4">
-        <button onclick="editFlower(${index})" class="flex-1 bg-yellow-400 text-black py-2 rounded-xl font-black text-sm">✏️ Sửa</button>
+        <button onclick="editFlower(${index})" class="flex-1 bg-yellow-400 text-black py-2 rounded-xl font-black text-sm">✏️ Sửa tên</button>
         <button onclick="deleteFlower(${index})" class="flex-1 bg-red-500 text-white py-2 rounded-xl font-black text-sm">🗑️ Xóa</button>
       </div>
     </div>`).join('');
@@ -258,26 +258,53 @@ function renderAdminFlowers(){
 
 function deleteFlower(index){ if(confirm('Xóa hoa này?')){ flowers.splice(index,1); saveData(); renderSearch(); renderMembers(); renderAdminFlowers(); } }
 
+// ==========================================
+// HÀM MỚI: SỬA TÊN THÀNH VIÊN ĐỒNG LOẠT Ở MỌI BÔNG HOA
+// ==========================================
 function editFlower(index){
   const f = flowers[index];
-  const newName = prompt('Tên hoa', f.name); if(newName === null) return;
   const currentIngame = f.owners && f.owners[0] ? f.owners[0].ingame : '';
-  const newIngame = prompt('Tên ingame', currentIngame); if(newIngame === null) return;
   const currentZalo = f.owners && f.owners[0] ? f.owners[0].zalo : '';
-  const newZalo = prompt('Tên zalo', currentZalo); if(newZalo === null) return;
-  f.name = newName;
+  
+  const newName = prompt('Sửa tên hoa (Bỏ qua nếu chỉ sửa tên người)', f.name); 
+  if(newName === null) return;
+  
+  const newIngame = prompt('Nhập TÊN INGAME mới chính xác:', currentIngame); 
+  if(newIngame === null) return;
+  
+  const newZalo = prompt('Nhập TÊN ZALO mới (nếu có):', currentZalo); 
+  if(newZalo === null) return;
+
+  // Lấy tên ingame cũ để làm gốc quét tìm kiếm đồng loạt
+  const oldIngameLower = currentIngame.trim().toLowerCase();
+
+  // Quét toàn bộ hệ thống dữ liệu để đổi tên cho thành viên này ở tất cả các bông hoa họ có
+  flowers.forEach(flower => {
+    if(flower.owners && Array.isArray(flower.owners)) {
+      flower.owners.forEach(owner => {
+        if(owner.ingame && owner.ingame.trim().toLowerCase() === oldIngameLower) {
+          owner.ingame = newIngame.trim();
+          owner.zalo = newZalo.trim();
+        }
+      });
+    }
+  });
+
+  // Cập nhật riêng cho bông hoa đang chọn sửa
+  f.name = newName.trim();
   if(!f.owners || !Array.isArray(f.owners)) { f.owners = []; }
   if(f.owners.length === 0) { f.owners.push({ ingame: '', zalo: '' }); }
-  f.owners[0].ingame = newIngame; f.owners[0].zalo = newZalo;
-  saveData(); renderSearch(); renderMembers(); renderAdminFlowers();
-  alert('Đã cập nhật thành công 🌸');
+  f.owners[0].ingame = newIngame.trim(); 
+  f.owners[0].zalo = newZalo.trim();
+
+  saveData().then(() => {
+    renderSearch(); renderMembers(); renderAdminFlowers();
+    alert('Đã cập nhật đổi tên thành viên đồng loạt thành công! 🌸');
+  });
 }
 
 function clearAllFlowers(){ if(confirm('Bạn có chắc muốn xóa TOÀN BỘ dữ liệu?')){ flowers = []; localStorage.removeItem('dvdFlowers'); saveData(); renderSearch(); renderMembers(); renderAdminFlowers(); alert('Đã xóa toàn bộ dữ liệu 🌸'); } }
 
-// ==========================================
-// HÀM MỚI: TỰ ĐỘNG PHÁT HIỆN HOA CŨ ĐỂ GHÉP NGƯỜI MỚI VÀO
-// ==========================================
 function addFlower(){
   const ingame = document.getElementById('memberName').value.trim();
   const zalo = document.getElementById('memberZalo').value.trim();
@@ -288,29 +315,21 @@ function addFlower(){
   
   if(!ingame || !flowerName){ alert("Vui lòng điền Tên ingame và Tên hoa!"); return; }
   
-  // Kiểm tra xem hoa này đã từng có trong hệ thống chưa
   const existingFlower = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
   
   if(existingFlower) {
-    // NẾU LÀ HOA CŨ: Chỉ cần nhét thêm người sở hữu mới vào bông hoa cũ đó
     if(!existingFlower.owners) existingFlower.owners = [];
-    
-    // Tránh trùng lặp người trong cùng 1 bông hoa
     const isMemberExist = existingFlower.owners.some(o => o.ingame.trim().toLowerCase() === ingame.toLowerCase());
     if(!isMemberExist) {
        existingFlower.owners.push({ ingame: ingame, zalo: zalo });
     }
-    
-    // Đẩy lên đồng bộ trực tiếp
     saveData().then(() => {
       renderSearch(); renderMembers(); renderAdminFlowers();
       document.getElementById('memberName').value = ""; document.getElementById('memberZalo').value = "";
       alert(`Đã thêm thành viên ${ingame} vào hoa cũ "${flowerName.toUpperCase()}" thành công!`);
     });
   } else {
-    // NẾU LÀ HOA MỚI TINH: Bắt buộc phải chọn ảnh
-    if(!imageFile){ alert("Hoa này là hoa mới hoàn toàn, bạn vui lòng bấm chọn Tệp Ảnh cho hoa nhé!"); return; }
-    
+    if(!imageFile){ alert("Hoa này là hoa mới hoàn toàn, vui lòng chọn Ảnh cho hoa!"); return; }
     const reader = new FileReader();
     reader.onload = async function(e){
       flowers.push({
@@ -322,7 +341,7 @@ function addFlower(){
       await saveData(); renderSearch(); renderMembers(); renderAdminFlowers();
       document.getElementById('memberName').value = ""; document.getElementById('memberZalo').value = "";
       document.getElementById('flowerName').value = ""; document.getElementById('flowerImage').value = "";
-      alert("Đã thêm hoa mới và thành viên sở hữu thành công 🌸");
+      alert("Đã thêm hoa mới thành công 🌸");
     };
     reader.readAsDataURL(imageFile);
   }
