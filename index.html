@@ -311,3 +311,102 @@ function compressImage(file, maxWidth, maxHeight, quality) {
         if (width > height) {
           if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
         } else {
+          if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
+        }
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+async function addFlower(){
+  const ingame = document.getElementById('memberName').value.trim();
+  const zalo = document.getElementById('memberZalo').value.trim();
+  const flowerName = document.getElementById('flowerName').value.trim();
+  const flowerType = document.getElementById('flowerType').value;
+  const rarity = document.getElementById('flowerRarity').value;
+  const imageFile = document.getElementById('flowerImage').files[0];
+  
+  if(!ingame || !flowerName){
+    alert("Vui lòng nhập đủ thông tin: Tên ingame và Tên hoa!");
+    return;
+  }
+  
+  const existingFlower = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
+  
+  if(existingFlower){
+    if(!existingFlower.owners) existingFlower.owners = [];
+    const isExist = existingFlower.owners.some(o => o.ingame.trim().toLowerCase() === ingame.toLowerCase());
+    if(!isExist){
+      existingFlower.owners.push({ ingame: ingame, zalo: zalo });
+    }
+    
+    await saveData();
+    document.getElementById('memberName').value = ""; 
+    document.getElementById('memberZalo').value = "";
+    renderSearch(); renderMembers(); renderAdminFlowers();
+    alert(`Đã thêm thành viên "${ingame}" vào bông hoa "${flowerName.toUpperCase()}" thành công! 🌸`);
+  } else {
+    if(!imageFile){
+      alert("Bông hoa này chưa tồn tại. Vui lòng chọn FILE ẢNH cho loại hoa mới này!");
+      return;
+    }
+    
+    try {
+      const compressedBase64 = await compressImage(imageFile, 400, 400, 0.7);
+      
+      flowers.push({
+        name: flowerName,
+        rarity: rarity,
+        image: compressedBase64,
+        flowerXu: flowerType === 'xu' ? 1 : 0,
+        flowerPack: flowerType === 'goi' ? 1 : 0,
+        owners: [{ ingame: ingame, zalo: zalo }]
+      });
+      
+      await saveData();
+      document.getElementById('memberName').value = ""; 
+      document.getElementById('memberZalo').value = "";
+      document.getElementById('flowerName').value = ""; 
+      document.getElementById('flowerImage').value = "";
+      renderSearch(); renderMembers(); renderAdminFlowers();
+      alert("Đã tạo mẫu hoa mới và thêm thành viên thành công! 🌸");
+    } catch (err) {
+      alert("Lỗi xử lý nén ảnh: " + err.message);
+    }
+  }
+}
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyAip9TsFQLFVYfTCafngZh81W6saGWqEvQ",
+  authDomain: "dvdhoa.firebaseapp.com",
+  projectId: "dvdhoa",
+  storageBucket: "dvdhoa.firebasestorage.app",
+  messagingSenderId: "895700989452",
+  appId: "1:895700989452:web:06ed440fbe3b6aafd1a029",
+  measurementId: "G-2MBFFLEKP3"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const dataRef = doc(db,"dvdflower","data");
+
+onSnapshot(dataRef,(snap)=>{
+  if(snap.exists()){
+    flowers = snap.data().flowers || [];
+    localStorage.setItem('dvdFlowers', JSON.stringify(flowers));
+    renderSearch(); renderMembers(); renderAdminFlowers();
+  }
+});
+
+window.saveCloudData = async function(){ await setDoc(dataRef,{ flowers: flowers }); };
+</script>
+</body>
+</html>
