@@ -738,7 +738,7 @@ function rarityClass(r){
 }
 
 // ==========================================
-// 🛠️ TỐI ƯU HÀM GỘP HOA - KHÔNG BỎ SÓT BẤT KỲ HOA MỚI NÀO CỦA THÀNH VIÊN
+// 🛠️ FIX SẬP SCRIPT & HỖ TRỢ TỰ ĐỘNG GỘP TẤT CẢ HOA CỦA THÀNH VIÊN CŨ
 // ==========================================
 function mergedFlowers(){
 
@@ -748,7 +748,6 @@ function mergedFlowers(){
 
     if(!f || !f.name) return;
 
-    // Chuẩn hóa tên hoa viết hoa để tránh tạo bản sao lỗi
     const flowerKey = f.name.trim().toUpperCase();
 
     if(!map[flowerKey]){
@@ -892,7 +891,7 @@ function showRarity(r){
 }
 
 // ==========================================
-// 🛠️ TỐI ƯU TRA CỨU HOA CỦA MỘT THÀNH VIÊN CỤ THỂ
+// 🛠️ TÌM KIẾM CHÍNH XÁC TẤT CẢ HOA MÀ THÀNH VIÊN CŨ ĐANG SỞ HỮU
 // ==========================================
 function showMemberFlowers(memberName){
 
@@ -954,7 +953,7 @@ function closeFlowerOwnersModal(){
 }
 
 // ==========================================
-// 🛠️ TỐI ƯU DANH SÁCH THÀNH VIÊN - KHÔNG BỊ TRÙNG LẶP KHI THÊM NHIỀU HOA
+// 🛠️ DANH SÁCH THÀNH VIÊN KHÔNG BỊ TRÙNG LẶP KHI THÊM NHIỀU HOA MỚI
 // ==========================================
 function renderMembers(){
 
@@ -965,7 +964,6 @@ function renderMembers(){
       f.owners.forEach(o=>{
         if(o && o.ingame){
           const userKey = o.ingame.trim().toLowerCase();
-          // Nếu chưa có user hoặc bản ghi trước bị thiếu zalo thì cập nhật zalo mới nhất
           if(!members[userKey] || (!members[userKey].zalo && o.zalo)){
             members[userKey] = {
               ingame: o.ingame.trim(),
@@ -1162,7 +1160,7 @@ function addFlower(){
     renderMembers();
     renderAdminFlowers();
 
-    // Giữ nguyên thông tin thành viên (Ingame + Zalo) để admin nhập tiếp hoa khác cho họ
+    // Giữ nguyên thông tin Ingame & Zalo của người cũ để Admin nhập tiếp bông khác cho họ thuận tiện
     document.getElementById('flowerName').value = "";
     document.getElementById('flowerImage').value = "";
 
