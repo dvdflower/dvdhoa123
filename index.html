@@ -22,11 +22,12 @@ body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; ri
 .menu-btn:hover{ transform: translateY(-4px) scale(1.02); }
 .menu-btn::before{ content:''; position:absolute; inset:0; background: linear-gradient( to right, transparent, rgba(255,255,255,.25), transparent ); transform:translateX(-100%); }
 .menu-btn:hover::before{ transform:translateX(100%); transition:.7s; }
-.card{ transition:.25s; position:relative; overflow:hidden; }
+.card{ transition:.25s; position:relative; overflow:hidden; cursor: pointer; }
 .card:hover{ transform: translateY(-6px) scale(1.03); box-shadow: 0 20px 40px rgba(0,0,0,.12); }
 .card::before{ content:''; position:absolute; top:-40%; left:-40%; width:180%; height:180%; background: linear-gradient( 120deg, transparent, rgba(255,255,255,.35), transparent ); transform:rotate(25deg); transition:.7s; }
 .card:hover::before{ left:120%; }
 .rarity-red{ background: linear-gradient(to bottom,#ffe3e3,#fff7f7); }
+.rarity-orange{ background: gradient(to bottom,#ffe7cf,#fff8ef); }
 .rarity-orange{ background: linear-gradient(to bottom,#ffe7cf,#fff8ef); }
 .rarity-purple{ background: linear-gradient(to bottom,#f1e2ff,#fff8ff); }
 .rarity-blue{ background: linear-gradient(to bottom,#dff1ff,#f7fcff); }
@@ -114,8 +115,11 @@ body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; ri
 </div>
 
 <div id="memberFlowerModal" class="modal">
-<div class="modal-content rounded-[35px] p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-<div class="flex justify-between items-center mb-5"><h2 class="text-3xl font-black">🌸 Hoa thành viên sở hữu</h2><button onclick="closeMemberModal()" class="bg-red-500 text-white px-4 py-2 rounded-xl font-bold">Đóng</button></div>
+<div class="modal-content rounded-[35px] p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
+<div class="flex justify-between items-center mb-5">
+  <h2 id="modalTitle" class="text-3xl font-black text-gray-800">🌸 Tiêu đề</h2>
+  <button onclick="closeMemberModal()" class="bg-red-500 text-white px-5 py-2 rounded-2xl font-black shadow-md hover:bg-red-600 transition">Đóng</button>
+</div>
 <div id="memberFlowerContent" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
 </div>
 </div>
@@ -162,13 +166,14 @@ function mergedFlowers(){
 function renderSearch(data=mergedFlowers()){
   const grid = document.getElementById('searchGrid'); if(!grid) return;
   grid.innerHTML = data.map(f=>`
-  <div class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
+  <div onclick="showFlowerOwners('${f.name.replace(/'/g, "\\'")}')" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
     <div class="flex justify-center"><img src="${f.image}" class="flower-img w-32 h-32 object-contain"/></div>
     <h2 class="text-center text-xl font-black text-[#5f412e] mt-4 tracking-wide uppercase">${f.name}</h2>
     <div class="mt-3 space-y-2 text-center">
       ${f.flowerXu ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-amber-600">🪙 Hoa xu</div>` : ''}
       ${f.flowerPack ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-purple-600">🎁 Hoa gói</div>` : ''}
     </div>
+    <div class="text-center text-xs text-pink-600 font-black mt-2">Xem người sở hữu 🔎</div>
   </div>`).join('');
   const tf = document.getElementById('totalFlowers'); if(tf) tf.innerText = data.length;
 }
@@ -186,27 +191,57 @@ function showRarity(r){
   const data = mergedFlowers().filter(f=>f.rarity===r);
   const grid = document.getElementById('rarityGrid'); if(!grid) return;
   grid.innerHTML = data.map(f=>`
-  <div class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
+  <div onclick="showFlowerOwners('${f.name.replace(/'/g, "\\'")}')" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
     <div class="flex justify-center"><img src="${f.image}" class="flower-img w-28 h-28 object-contain"/></div>
     <h2 class="text-center text-lg font-black mt-4 uppercase tracking-wide text-gray-800">${f.name}</h2>
     <div class="text-center mt-3 space-y-2 text-sm font-black">
       <div>${f.flowerXu ? '🪙 Hoa xu' : ''}</div>
       <div>${f.flowerPack ? '🎁 Hoa gói' : ''}</div>
     </div>
+    <div class="text-center text-xs text-pink-600 font-black mt-2">Xem người sở hữu 🔎</div>
   </div>`).join('');
 }
 
+// TÍNH NĂNG MỚI: BẤM VÀO HOA HIỆN DANH SÁCH THÀNH VIÊN SỞ HỮU
+function showFlowerOwners(flowerName){
+  const target = mergedFlowers().find(f => f.name.trim().toLowerCase() === flowerName.trim().toLowerCase());
+  document.getElementById('modalTitle').innerText = `👥 Thành viên sở hữu: ${flowerName.toUpperCase()}`;
+  
+  const contentGrid = document.getElementById('memberFlowerContent');
+  // Chuyển Modal layout sang dạng danh sách thành viên cho dễ nhìn
+  contentGrid.className = "grid grid-cols-1 md:grid-cols-2 gap-4"; 
+  
+  if(target && target.owners && target.owners.length > 0){
+    contentGrid.innerHTML = target.owners.map(o => `
+      <div class="bg-gradient-to-r from-teal-50 to-white border border-teal-100 rounded-2xl p-4 shadow-sm">
+        <div class="text-xl font-black text-teal-900">🎮 ${o.ingame}</div>
+        <div class="text-sm font-bold text-gray-500 mt-1">💬 Zalo: ${o.zalo || 'Không có'}</div>
+      </div>
+    `).join('');
+  } else {
+    contentGrid.innerHTML = '<p class="text-center text-gray-500 font-bold py-4 col-span-2">Chưa có ai sở hữu bông hoa này.</p>';
+  }
+  document.getElementById('memberFlowerModal').style.display = 'flex';
+}
+
+// BẤM THÀNH VIÊN HIỆN DANH SÁCH HOA SỞ HỮU
 function showMemberFlowers(memberName){
+  document.getElementById('modalTitle').innerText = `🌸 Hoa sở hữu của: ${memberName}`;
+  const contentGrid = document.getElementById('memberFlowerContent');
+  // Đổi lại Grid 4 cột để hiển thị các thẻ hoa đẹp mắt
+  contentGrid.className = "grid grid-cols-2 md:grid-cols-4 gap-4"; 
+  
   const data = mergedFlowers().filter(f=> f.owners.some(o=>o.ingame.trim().toLowerCase() === memberName.trim().toLowerCase()) );
   const htmlData = data.map(f=>`
-    <div class="${rarityClass(f.rarity)} rounded-3xl p-4 shadow-lg">
+    <div class="${rarityClass(f.rarity)} rounded-3xl p-4 shadow-lg border border-gray-100">
       <div class="flex justify-center"><img src="${f.image}" class="w-24 h-24 object-contain"/></div>
-      <h3 class="text-center font-black text-lg mt-3 uppercase tracking-wide">${f.name}</h3>
-      <div class="text-center mt-2 font-black text-sm">${f.flowerXu ? '🪙 Hoa xu' : '🎁 Hoa gói'}</div>
+      <h3 class="text-center font-black text-base mt-3 uppercase tracking-wide text-gray-800">${f.name}</h3>
+      <div class="text-center mt-2 font-black text-xs text-teal-700">${f.flowerXu ? '🪙 Hoa xu' : '🎁 Hoa gói'}</div>
     </div>`).join('');
-  document.getElementById('memberFlowerContent').innerHTML = htmlData || '<p class="text-center col-span-2 text-gray-500 font-bold">Chưa sở hữu hoa nào.</p>';
+  contentGrid.innerHTML = htmlData || '<p class="text-center col-span-2 text-gray-500 font-bold py-4">Chưa sở hữu hoa nào.</p>';
   document.getElementById('memberFlowerModal').style.display='flex';
 }
+
 function closeMemberModal(){ document.getElementById('memberFlowerModal').style.display='none'; }
 
 function renderMembers(){
@@ -214,8 +249,7 @@ function renderMembers(){
   flowers.forEach(f=>{
     if(f.owners && Array.isArray(f.owners)){
       f.owners.forEach(o=>{ 
-        // ĐÃ KHẮC PHỤC LỖI CHỮ BLANKS SAI CÚ PHÁP TẠI ĐÂY
-        if(!members[o.ingame.trim().toLowerCase()]){ 
+        if(!members[o.ingame.trim().toLowerCase() blanks] && !members[o.ingame.trim().toLowerCase()]){ 
           members[o.ingame.trim().toLowerCase()] = { ingame:o.ingame, zalo:o.zalo }; 
         } 
       });
