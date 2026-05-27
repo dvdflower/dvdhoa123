@@ -119,10 +119,20 @@ body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; ri
 
 </div>
 <script>
-let flowers = JSON.parse(localStorage.getItem('dvdFlowers')) || [];
+let flowers = [];
 const adminPass = "DVD123";
 
-async function saveData(){ localStorage.setItem('dvdFlowers', JSON.stringify(flowers)); if(window.saveCloudData){ await window.saveCloudData(); } }
+async function saveData(){
+  localStorage.setItem('dvdFlowers', JSON.stringify(flowers));
+  if(window.saveCloudData){
+    try {
+      await window.saveCloudData();
+    } catch(e) {
+      alert("Lỗi lưu trữ đám mây! Hãy chắc chắn bạn đã cập nhật code nén ảnh mới.");
+    }
+  }
+}
+
 function showSection(id){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); }
 function adminLogin(){ const pass = prompt("Nhập mật khẩu Admin"); if(pass === adminPass){ showSection('adminSection'); alert("Đăng nhập thành công 🌸"); }else{ alert("Sai mật khẩu"); } }
 function rarityClass(r){ switch(r){ case 'HOA ĐỎ': return 'rarity-red'; case 'HOA CAM': return 'rarity-orange'; case 'HOA TÍM': return 'rarity-purple'; case 'HOA LAM': return 'rarity-blue'; case 'HOA LỤC': return 'rarity-green'; default: return ''; } }
@@ -214,7 +224,6 @@ function renderMembers(){
 
 function renderAdminFlowers(){
   const list = document.getElementById('adminFlowerList'); if(!list) return;
-  
   list.innerHTML = flowers.map((f, index)=>`
     <div class="${rarityClass(f.rarity)} rounded-3xl p-6 shadow-lg border border-gray-200">
       <div class="flex items-center gap-5 justify-between border-b pb-4 mb-4 border-gray-300/40">
@@ -227,7 +236,6 @@ function renderAdminFlowers(){
         </div>
         <button onclick="deleteFlower(${index})" class="bg-red-50 text-red-600 border border-red-200 font-bold px-4 py-2 rounded-xl text-xs hover:bg-red-100">🗑️ Xóa bông này</button>
       </div>
-
       <div>
         <div class="text-xs font-bold uppercase text-gray-400 mb-2">Thành viên sở hữu bông này:</div>
         <div class="space-y-2">
@@ -285,10 +293,34 @@ function clearAllFlowers(){
   }
 }
 
-// ========================================================
-// HÀM THÊM HOA ĐÃ ĐƯỢC FIX LỖI HOÀN TOÀN:
-// ========================================================
-function addFlower(){
+// HÀM TỰ ĐỘNG NÉN ẢNH CHỐNG TRÀN BỘ NHỚ 1MB FIRESTORE
+function compressImage(file, maxWidth, maxHeight, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function (e) {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = function () {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+        } else {
+          if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
+        }
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+    };
+    reader.onerror = error => reject(error);
+  });
+}
+
+async function addFlower(){
   const ingame = document.getElementById('memberName').value.trim();
   const zalo = document.getElementById('memberZalo').value.trim();
   const flowerName = document.getElementById('flowerName').value.trim();
@@ -301,57 +333,51 @@ function addFlower(){
     return;
   }
   
-  // Kiểm tra xem hoa này đã có sẵn trong cơ sở dữ liệu chưa
   const existingFlower = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
   
   if(existingFlower){
-    // TÌNH HUỐNG 1: HOA ĐÃ CÓ SẴN -> Chỉ thêm người sở hữu (KHÔNG CẦN CHỌN ẢNH)
     if(!existingFlower.owners) existingFlower.owners = [];
-    
-    // Nếu người này chưa có trong danh sách sở hữu hoa này thì thêm vào
     const isExist = existingFlower.owners.some(o => o.ingame.trim().toLowerCase() === ingame.toLowerCase());
     if(!isExist){
       existingFlower.owners.push({ ingame: ingame, zalo: zalo });
     }
     
-    saveData().then(() => {
-      renderSearch(); renderMembers(); renderAdminFlowers();
-      document.getElementById('memberName').value = ""; 
-      document.getElementById('memberZalo').value = "";
-      alert(`Đã thêm thành viên "${ingame}" vào bông hoa "${flowerName.toUpperCase()}" thành công! 🌸`);
-    });
+    await saveData();
+    document.getElementById('memberName').value = ""; 
+    document.getElementById('memberZalo').value = "";
+    renderSearch(); renderMembers(); renderAdminFlowers();
+    alert(`Đã thêm thành viên "${ingame}" vào bông hoa "${flowerName.toUpperCase()}" thành công! 🌸`);
   } else {
-    // TÌNH HUỐNG 2: HOA MỚI TINH -> Bắt buộc phải chọn ảnh
     if(!imageFile){
-      alert("Bông hoa này chưa có trên hệ thống. Vui lòng chọn FILE ẢNH cho hoa mới!");
+      alert("Bông hoa này chưa tồn tại. Vui lòng chọn FILE ẢNH cho loại hoa mới này!");
       return;
     }
     
-    const reader = new FileReader();
-    reader.onload = function(e){
+    try {
+      // Tiến hành nén ảnh xuống kích thước tối ưu (vừa nhẹ vừa đủ hiển thị)
+      const compressedBase64 = await compressImage(imageFile, 400, 400, 0.7);
+      
       flowers.push({
         name: flowerName,
         rarity: rarity,
-        image: e.target.result,
+        image: compressedBase64,
         flowerXu: flowerType === 'xu' ? 1 : 0,
         flowerPack: flowerType === 'goi' ? 1 : 0,
         owners: [{ ingame: ingame, zalo: zalo }]
       });
       
-      saveData().then(() => {
-        renderSearch(); renderMembers(); renderAdminFlowers();
-        document.getElementById('memberName').value = ""; 
-        document.getElementById('memberZalo').value = "";
-        document.getElementById('flowerName').value = ""; 
-        document.getElementById('flowerImage').value = "";
-        alert("Đã tạo hoa mới và thêm thành viên đầu tiên thành công! 🌸");
-      });
-    };
-    reader.readAsDataURL(imageFile);
+      await saveData();
+      document.getElementById('memberName').value = ""; 
+      document.getElementById('memberZalo').value = "";
+      document.getElementById('flowerName').value = ""; 
+      document.getElementById('flowerImage').value = "";
+      renderSearch(); renderMembers(); renderAdminFlowers();
+      alert("Đã tạo mẫu hoa mới (Đã nén dung lượng chống tràn) và thêm thành viên thành công! 🌸");
+    } catch (err) {
+      alert("Lỗi xử lý nén ảnh: " + err.message);
+    }
   }
 }
-
-renderSearch(); renderMembers(); renderAdminFlowers();
 </script>
 
 <script type="module">
