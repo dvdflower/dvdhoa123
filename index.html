@@ -224,7 +224,7 @@ function renderMembers(){
     }
   });
   const list = document.getElementById('memberList'); if(!list) return;
-  list.innerHTML = Object.values(members).map(m=>`
+  list.innerHTML = Object.values(members).sort((a, b) => a.ingame.localeCompare(b.ingame)).map(m=>`
     <button onclick="showMemberFlowers('${m.ingame.replace(/'/g, "\\'")}')" class="owner-box rounded-3xl p-5 text-left shadow hover:scale-[1.02] transition">
       <div class="text-2xl font-black text-[#1c5d4d]">🎮 ${m.ingame}</div>
       <div class="mt-2 text-gray-600">💬 ${m.zalo || 'Không có zalo'}</div>
