@@ -6,13 +6,13 @@
     <title>DvD Flower</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Fredoka - Hỗ trợ đầy đủ tiếng Việt -->
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts - Baloo 2 - Hỗ trợ tốt tiếng Việt, nét tròn trịa giống ảnh mẫu -->
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
-        /* Ép buộc font Fredoka cho toàn bộ văn bản */
+        /* Ép buộc font Baloo 2 cho toàn bộ văn bản */
         * {
-            font-family: 'Fredoka', sans-serif !important;
+            font-family: 'Baloo 2', cursive !important;
         }
         
         body { 
@@ -21,12 +21,18 @@
             overflow-x: hidden; 
         }
 
+        /* Tinh chỉnh typography để giống ảnh mẫu */
+        h1, h2, h3, h4 {
+            letter-spacing: 1px !important;
+            font-weight: 700 !important;
+        }
+
         .header-box { background: linear-gradient(135deg, #0c4c3d, #196953); }
         .section { display: none; }
         .active-section { display: block; }
         
-        /* Đảm bảo các ký tự có dấu không bị lỗi hiển thị */
-        h1, h2, h3, h4, p, span, button, input, select {
+        /* Đảm bảo các ký tự có dấu hiển thị mượt mà */
+        * {
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
@@ -39,14 +45,15 @@
         <h1 class="text-5xl font-bold text-white">DvD Flower</h1>
         <p class="text-green-100 mt-2 text-xl">Fantasy Flower Inventory RPG</p>
     </div>
-    <!-- Nội dung hiển thị -->
+    
+    <!-- Nội dung chính -->
     <div id="content" class="mt-6">
-        <p class="text-2xl text-gray-800">Chào mừng bạn! Hệ thống đã được cấu hình font tiếng Việt chuẩn.</p>
+        <p class="text-2xl text-gray-800">Cấu hình font Baloo 2 đã được áp dụng thành công.</p>
     </div>
 </div>
 
 <script>
-    // Logic của bạn giữ nguyên tại đây
+    // Logic code của bạn giữ nguyên
 </script>
 
 </body>
