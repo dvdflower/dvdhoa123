@@ -116,8 +116,8 @@ body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; ri
 <div id="memberFlowerModal" class="modal">
 <div class="modal-content rounded-[35px] p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto m-4">
 <div class="flex justify-between items-center mb-5">
-  <h2 id="modalTitle" class="text-3xl font-black text-gray-800">🌸 Chi tiết thông tin</h2>
-  <button onclick="closeMemberModal()" class="bg-red-500 text-white px-5 py-2 rounded-2xl font-black shadow-md hover:bg-red-600 transition">Đóng</button>
+  <h2 id="modalTitle" class="text-3xl font-black text-gray-800">🌸 Chi tiết thông tin</h2>
+  <button onclick="closeMemberModal()" class="bg-red-500 text-white px-5 py-2 rounded-2xl font-black shadow-md hover:bg-red-600 transition">Đóng</button>
 </div>
 <div id="memberFlowerContent" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
 </div>
@@ -128,15 +128,26 @@ body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; ri
 let flowers = [];
 const adminPass = "DVD123";
 
+// --- HÀM SẮP XẾP MỚI ---
+function sortFlowers(list) {
+    const rarityOrder = { 'HOA ĐỎ': 1, 'HOA CAM': 2, 'HOA TÍM': 3, 'HOA LAM': 4, 'HOA LỤC': 5 };
+    return [...list].sort((a, b) => {
+        const rA = rarityOrder[a.rarity] || 6;
+        const rB = rarityOrder[b.rarity] || 6;
+        if (rA !== rB) return rA - rB;
+        return a.name.localeCompare(b.name, 'vi', { sensitivity: 'base' });
+    });
+}
+
 async function saveData(){
-  localStorage.setItem('dvdFlowers', JSON.stringify(flowers));
-  if(window.saveCloudData){
-    try {
-      await window.saveCloudData();
-    } catch(e) {
-      alert("Lỗi lưu trữ dữ liệu đám mây!");
-    }
-  }
+  localStorage.setItem('dvdFlowers', JSON.stringify(flowers));
+  if(window.saveCloudData){
+    try {
+      await window.saveCloudData();
+    } catch(e) {
+      alert("Lỗi lưu trữ dữ liệu đám mây!");
+    }
+  }
 }
 
 function showSection(id){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); }
@@ -144,296 +155,294 @@ function adminLogin(){ const pass = prompt("Nhập mật khẩu Admin"); if(pass
 function rarityClass(r){ switch(r){ case 'HOA ĐỎ': return 'rarity-red'; case 'HOA CAM': return 'rarity-orange'; case 'HOA TÍM': return 'rarity-purple'; case 'HOA LAM': return 'rarity-blue'; case 'HOA LỤC': return 'rarity-green'; default: return ''; } }
 
 function mergedFlowers(){
-  const map = {};
-  flowers.forEach(f=>{
-    if(!f || !f.name) return;
-    const nameUpper = f.name.trim().toUpperCase();
-    if(!map[nameUpper]){
-      map[nameUpper]={ name:f.name, image:f.image, rarity:f.rarity, flowerXu: f.flowerXu, flowerPack: f.flowerPack, owners:[] };
-    }
-    if(f.owners && Array.isArray(f.owners)){
-      f.owners.forEach(o => {
-        if(!map[nameUpper].owners.some(existing => existing.ingame.trim().toLowerCase() === o.ingame.trim().toLowerCase())){
-          map[nameUpper].owners.push({ ingame: o.ingame, zalo: o.zalo || '' });
-        }
-      });
-    }
-  });
-  return Object.values(map);
+  const map = {};
+  flowers.forEach(f=>{
+    if(!f || !f.name) return;
+    const nameUpper = f.name.trim().toUpperCase();
+    if(!map[nameUpper]){
+      map[nameUpper]={ name:f.name, image:f.image, rarity:f.rarity, flowerXu: f.flowerXu, flowerPack: f.flowerPack, owners:[] };
+    }
+    if(f.owners && Array.isArray(f.owners)){
+      f.owners.forEach(o => {
+        if(!map[nameUpper].owners.some(existing => existing.ingame.trim().toLowerCase() === o.ingame.trim().toLowerCase())){
+          map[nameUpper].owners.push({ ingame: o.ingame, zalo: o.zalo || '' });
+        }
+      });
+    }
+  });
+  return Object.values(map);
 }
 
-function renderSearch(data=mergedFlowers()){
-  const grid = document.getElementById('searchGrid'); if(!grid) return;
-  grid.innerHTML = data.map((f, i)=>`
-  <div onclick="showFlowerOwnersByIndex(${i})" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
-    <div class="flex justify-center"><img src="${f.image}" class="flower-img w-32 h-32 object-contain"/></div>
-    <h2 class="text-center text-xl font-black text-[#5f412e] mt-4 tracking-wide uppercase">${f.name}</h2>
-    <div class="mt-3 space-y-2 text-center">
-      ${f.flowerXu ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-amber-600">🪙 Hoa xu</div>` : ''}
-      ${f.flowerPack ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-purple-600">🎁 Hoa gói</div>` : ''}
-    </div>
-    <div class="text-center text-xs text-pink-600 font-black mt-2">Xem người sở hữu 🔎</div>
-  </div>`).join('');
-  const tf = document.getElementById('totalFlowers'); if(tf) tf.innerText = data.length;
+function renderSearch(data = sortFlowers(mergedFlowers())){
+  const grid = document.getElementById('searchGrid'); if(!grid) return;
+  grid.innerHTML = data.map((f, i)=>`
+  <div onclick="showFlowerOwnersByIndex(${i})" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
+    <div class="flex justify-center"><img src="${f.image}" class="flower-img w-32 h-32 object-contain"/></div>
+    <h2 class="text-center text-xl font-black text-[#5f412e] mt-4 tracking-wide uppercase">${f.name}</h2>
+    <div class="mt-3 space-y-2 text-center">
+      ${f.flowerXu ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-amber-600">🪙 Hoa xu</div>` : ''}
+      ${f.flowerPack ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-purple-600">🎁 Hoa gói</div>` : ''}
+    </div>
+    <div class="text-center text-xs text-pink-600 font-black mt-2">Xem người sở hữu 🔎</div>
+  </div>`).join('');
+  const tf = document.getElementById('totalFlowers'); if(tf) tf.innerText = data.length;
 }
 
 function searchFlowers(){
-  const key = document.getElementById('searchInput').value.toLowerCase().trim();
-  const rarity = document.getElementById('rarityFilter').value;
-  let data = mergedFlowers();
-  if(key){ data = data.filter(f=> f.name.toLowerCase().includes(key) || f.owners.some(o=> o.ingame.toLowerCase().includes(key)) ); }
-  if(rarity){ data = data.filter(f=> f.rarity===rarity); }
-  
-  // Render danh sách tìm kiếm dựa trên chỉ mục động
-  const grid = document.getElementById('searchGrid'); if(!grid) return;
-  grid.innerHTML = data.map(f=>{
-    const allMerged = mergedFlowers();
-    const globalIndex = allMerged.findIndex(m => m.name.toUpperCase() === f.name.toUpperCase());
-    return `
-    <div onclick="showFlowerOwnersByIndex(${globalIndex})" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
-      <div class="flex justify-center"><img src="${f.image}" class="flower-img w-32 h-32 object-contain"/></div>
-      <h2 class="text-center text-xl font-black text-[#5f412e] mt-4 tracking-wide uppercase">${f.name}</h2>
-      <div class="mt-3 space-y-2 text-center">
-        ${f.flowerXu ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-amber-600">🪙 Hoa xu</div>` : ''}
-        ${f.flowerPack ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-purple-600">🎁 Hoa gói</div>` : ''}
-      </div>
-      <div class="text-center text-xs text-pink-600 font-black mt-2">Xem người sở hữu 🔎</div>
-    </div>`;
-  }).join('');
-  const tf = document.getElementById('totalFlowers'); if(tf) tf.innerText = data.length;
+  const key = document.getElementById('searchInput').value.toLowerCase().trim();
+  const rarity = document.getElementById('rarityFilter').value;
+  let data = mergedFlowers();
+  if(key){ data = data.filter(f=> f.name.toLowerCase().includes(key) || f.owners.some(o=> o.ingame.toLowerCase().includes(key)) ); }
+  if(rarity){ data = data.filter(f=> f.rarity===rarity); }
+  data = sortFlowers(data);
+  
+  const grid = document.getElementById('searchGrid'); if(!grid) return;
+  grid.innerHTML = data.map(f=>{
+    const allMerged = sortFlowers(mergedFlowers());
+    const globalIndex = allMerged.findIndex(m => m.name.toUpperCase() === f.name.toUpperCase());
+    return `
+    <div onclick="showFlowerOwnersByIndex(${globalIndex})" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
+      <div class="flex justify-center"><img src="${f.image}" class="flower-img w-32 h-32 object-contain"/></div>
+      <h2 class="text-center text-xl font-black text-[#5f412e] mt-4 tracking-wide uppercase">${f.name}</h2>
+      <div class="mt-3 space-y-2 text-center">
+        ${f.flowerXu ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-amber-600">🪙 Hoa xu</div>` : ''}
+        ${f.flowerPack ? `<div class="bg-white px-4 py-2 rounded-full font-black shadow text-sm text-purple-600">🎁 Hoa gói</div>` : ''}
+      </div>
+      <div class="text-center text-xs text-pink-600 font-black mt-2">Xem người sở hữu 🔎</div>
+    </div>`;
+  }).join('');
+  const tf = document.getElementById('totalFlowers'); if(tf) tf.innerText = data.length;
 }
 
 function showRarity(r){
-  const allMerged = mergedFlowers();
-  const data = allMerged.filter(f=>f.rarity===r);
-  const grid = document.getElementById('rarityGrid'); if(!grid) return;
-  grid.innerHTML = data.map(f=>`
-  <div onclick="showFlowerOwnersByIndex(${allMerged.findIndex(m=>m.name.toUpperCase()===f.name.toUpperCase())})" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
-    <div class="flex justify-center"><img src="${f.image}" class="flower-img w-28 h-28 object-contain"/></div>
-    <h2 class="text-center text-lg font-black mt-4 uppercase tracking-wide text-gray-800">${f.name}</h2>
-    <div class="text-center mt-3 space-y-2 text-sm font-black">
-      <div>${f.flowerXu ? '🪙 Hoa xu' : ''}</div>
-      <div>${f.flowerPack ? '🎁 Hoa gói' : ''}</div>
-    </div>
-    <div class="text-center text-xs text-pink-600 font-black mt-2">Xem người sở hữu 🔎</div>
-  </div>`).join('');
+  const allMerged = sortFlowers(mergedFlowers());
+  const data = allMerged.filter(f=>f.rarity===r);
+  const grid = document.getElementById('rarityGrid'); if(!grid) return;
+  grid.innerHTML = data.map(f=>`
+  <div onclick="showFlowerOwnersByIndex(${allMerged.findIndex(m=>m.name.toUpperCase()===f.name.toUpperCase())})" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
+    <div class="flex justify-center"><img src="${f.image}" class="flower-img w-28 h-28 object-contain"/></div>
+    <h2 class="text-center text-lg font-black mt-4 uppercase tracking-wide text-gray-800">${f.name}</h2>
+    <div class="text-center mt-3 space-y-2 text-sm font-black">
+      <div>${f.flowerXu ? '🪙 Hoa xu' : ''}</div>
+      <div>${f.flowerPack ? '🎁 Hoa gói' : ''}</div>
+    </div>
+    <div class="text-center text-xs text-pink-600 font-black mt-2">Xem người sở hữu 🔎</div>
+  </div>`).join('');
 }
 
-// SỬA LỖI KHÔNG HIỂN THỊ: GỌI QUA INDEX ĐỂ KHÔNG BỊ XUNG ĐỘT STRING DẤU NHÁY
 function showFlowerOwnersByIndex(index){
-  const allMerged = mergedFlowers();
-  const target = allMerged[index];
-  if(!target) return;
-  
-  document.getElementById('modalTitle').innerText = `👥 Thành viên sở hữu: ${target.name.toUpperCase()}`;
-  const contentGrid = document.getElementById('memberFlowerContent');
-  contentGrid.className = "grid grid-cols-1 md:grid-cols-2 gap-4"; 
-  
-  if(target.owners && target.owners.length > 0){
-    contentGrid.innerHTML = target.owners.map(o => `
-      <div class="bg-gradient-to-r from-teal-50 to-white border border-teal-100 rounded-2xl p-4 shadow-sm">
-        <div class="text-xl font-black text-teal-900">🎮 ${o.ingame}</div>
-        <div class="text-sm font-bold text-gray-500 mt-1">💬 Zalo: ${o.zalo || 'Không có'}</div>
-      </div>
-    `).join('');
-  } else {
-    contentGrid.innerHTML = '<p class="text-center text-gray-500 font-bold py-4 col-span-2">Chưa có ai sở hữu bông hoa này.</p>';
-  }
-  document.getElementById('memberFlowerModal').style.display = 'flex';
+  const allMerged = sortFlowers(mergedFlowers());
+  const target = allMerged[index];
+  if(!target) return;
+  
+  document.getElementById('modalTitle').innerText = `👥 Thành viên sở hữu: ${target.name.toUpperCase()}`;
+  const contentGrid = document.getElementById('memberFlowerContent');
+  contentGrid.className = "grid grid-cols-1 md:grid-cols-2 gap-4"; 
+  
+  if(target.owners && target.owners.length > 0){
+    contentGrid.innerHTML = target.owners.map(o => `
+      <div class="bg-gradient-to-r from-teal-50 to-white border border-teal-100 rounded-2xl p-4 shadow-sm">
+        <div class="text-xl font-black text-teal-900">🎮 ${o.ingame}</div>
+        <div class="text-sm font-bold text-gray-500 mt-1">💬 Zalo: ${o.zalo || 'Không có'}</div>
+      </div>
+    `).join('');
+  } else {
+    contentGrid.innerHTML = '<p class="text-center text-gray-500 font-bold py-4 col-span-2">Chưa có ai sở hữu bông hoa này.</p>';
+  }
+  document.getElementById('memberFlowerModal').style.display = 'flex';
 }
 
 function showMemberFlowers(memberName){
-  document.getElementById('modalTitle').innerText = `🌸 Hoa sở hữu của: ${memberName}`;
-  const contentGrid = document.getElementById('memberFlowerContent');
-  contentGrid.className = "grid grid-cols-2 md:grid-cols-4 gap-4"; 
-  
-  const data = mergedFlowers().filter(f=> f.owners.some(o=>o.ingame.trim().toLowerCase() === memberName.trim().toLowerCase()) );
-  const htmlData = data.map(f=>`
-    <div class="${rarityClass(f.rarity)} rounded-3xl p-4 shadow-lg border border-gray-100">
-      <div class="flex justify-center"><img src="${f.image}" class="w-24 h-24 object-contain"/></div>
-      <h3 class="text-center font-black text-base mt-3 uppercase tracking-wide text-gray-800">${f.name}</h3>
-      <div class="text-center mt-2 font-black text-xs text-teal-700">${f.flowerXu ? '🪙 Hoa xu' : '🎁 Hoa gói'}</div>
-    </div>`).join('');
-  contentGrid.innerHTML = htmlData || '<p class="text-center col-span-2 text-gray-500 font-bold py-4">Chưa sở hữu hoa nào.</p>';
-  document.getElementById('memberFlowerModal').style.display='flex';
+  document.getElementById('modalTitle').innerText = `🌸 Hoa sở hữu của: ${memberName}`;
+  const contentGrid = document.getElementById('memberFlowerContent');
+  contentGrid.className = "grid grid-cols-2 md:grid-cols-4 gap-4"; 
+  
+  const data = sortFlowers(mergedFlowers().filter(f=> f.owners.some(o=>o.ingame.trim().toLowerCase() === memberName.trim().toLowerCase())) );
+  const htmlData = data.map(f=>`
+    <div class="${rarityClass(f.rarity)} rounded-3xl p-4 shadow-lg border border-gray-100">
+      <div class="flex justify-center"><img src="${f.image}" class="w-24 h-24 object-contain"/></div>
+      <h3 class="text-center font-black text-base mt-3 uppercase tracking-wide text-gray-800">${f.name}</h3>
+      <div class="text-center mt-2 font-black text-xs text-teal-700">${f.flowerXu ? '🪙 Hoa xu' : '🎁 Hoa gói'}</div>
+    </div>`).join('');
+  contentGrid.innerHTML = htmlData || '<p class="text-center col-span-2 text-gray-500 font-bold py-4">Chưa sở hữu hoa nào.</p>';
+  document.getElementById('memberFlowerModal').style.display='flex';
 }
 
 function closeMemberModal(){ document.getElementById('memberFlowerModal').style.display='none'; }
 
 function renderMembers(){
-  const members = {};
-  flowers.forEach(f=>{
-    if(f.owners && Array.isArray(f.owners)){
-      f.owners.forEach(o=>{ 
-        // ĐÃ SỬA TRIỆT ĐỂ LỖI CHỮ BLANKS LÀM ĐƠ WEB Ở ĐÂY
-        if(!members[o.ingame.trim().toLowerCase()]){ 
-          members[o.ingame.trim().toLowerCase()] = { ingame:o.ingame, zalo:o.zalo }; 
-        } 
-      });
-    }
-  });
-  const list = document.getElementById('memberList'); if(!list) return;
-  list.innerHTML = Object.values(members).map(m=>`
-    <button onclick="showMemberFlowers('${m.ingame.replace(/'/g, "\\'")}')" class="owner-box rounded-3xl p-5 text-left shadow hover:scale-[1.02] transition">
-      <div class="text-2xl font-black text-[#1c5d4d]">🎮 ${m.ingame}</div>
-      <div class="mt-2 text-gray-600 font-bold">💬 ${m.zalo || 'Không có zalo'}</div>
-      <div class="mt-3 text-pink-600 font-black">Bấm để xem hoa sở hữu 🌸</div>
-    </button>`).join('');
+  const members = {};
+  flowers.forEach(f=>{
+    if(f.owners && Array.isArray(f.owners)){
+      f.owners.forEach(o=>{ 
+        if(!members[o.ingame.trim().toLowerCase()]){ 
+          members[o.ingame.trim().toLowerCase()] = { ingame:o.ingame, zalo:o.zalo }; 
+        } 
+      });
+    }
+  });
+  const list = document.getElementById('memberList'); if(!list) return;
+  list.innerHTML = Object.values(members).sort((a,b)=>a.ingame.localeCompare(b.ingame)).map(m=>`
+    <button onclick="showMemberFlowers('${m.ingame.replace(/'/g, "\\'")}')" class="owner-box rounded-3xl p-5 text-left shadow hover:scale-[1.02] transition">
+      <div class="text-2xl font-black text-[#1c5d4d]">🎮 ${m.ingame}</div>
+      <div class="mt-2 text-gray-600 font-bold">💬 ${m.zalo || 'Không có zalo'}</div>
+      <div class="mt-3 text-pink-600 font-black">Bấm để xem hoa sở hữu 🌸</div>
+    </button>`).join('');
 }
 
 function renderAdminFlowers(){
-  const list = document.getElementById('adminFlowerList'); if(!list) return;
-  list.innerHTML = flowers.map((f, index)=>`
-    <div class="${rarityClass(f.rarity)} rounded-3xl p-6 shadow-lg border border-gray-200">
-      <div class="flex items-center gap-5 justify-between border-b pb-4 mb-4 border-gray-300/40">
-        <div class="flex items-center gap-4">
-          <img src="${f.image}" class="w-20 h-20 object-contain bg-white/50 p-1 rounded-xl shadow-sm"/>
-          <div>
-            <div class="text-2xl font-black text-gray-800 uppercase tracking-wide">${f.name}</div>
-            <div class="text-sm font-black text-gray-500 mt-1">${f.rarity} • ${f.flowerPack > 0 ? '🎁 Hoa gói' : '🪙 Hoa xu'}</div>
-          </div>
-        </div>
-        <button onclick="deleteFlower(${index})" class="bg-red-50 text-red-600 border border-red-200 font-black px-4 py-2 rounded-xl text-xs hover:bg-red-100">🗑️ Xóa bông này</button>
-      </div>
-      <div>
-        <div class="text-xs font-black uppercase text-gray-400 mb-2">Thành viên sở hữu bông này:</div>
-        <div class="space-y-2">
-          ${(f.owners && f.owners.length > 0) ? f.owners.map((owner, oIndex) => `
-            <div class="flex items-center justify-between bg-white/80 p-3 rounded-xl shadow-sm border border-pink-100">
-              <div>
-                <span class="font-black text-teal-900">🎮 ${owner.ingame}</span>
-                <span class="text-xs font-bold text-gray-500 ml-2">${owner.zalo ? `(💬 Zalo: ${owner.zalo})` : ''}</span>
-              </div>
-              <div class="flex gap-2">
-                <button onclick="editMemberName(${index}, ${oIndex})" class="bg-yellow-400 text-black px-3 py-1 rounded-lg text-xs font-black shadow-sm">✏️ Sửa tên</button>
-                <button onclick="deleteMemberFromFlower(${index}, ${oIndex})" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-black shadow-sm">❌ Xóa người này</button>
-              </div>
-            </div>
-          `).join('') : '<p class="text-xs text-gray-400 italic font-bold">Chưa có ai sở hữu bông hoa này</p>'}
-        </div>
-      </div>
-    </div>`).join('');
+  const list = document.getElementById('adminFlowerList'); if(!list) return;
+  list.innerHTML = sortFlowers(flowers).map((f, index)=>`
+    <div class="${rarityClass(f.rarity)} rounded-3xl p-6 shadow-lg border border-gray-200">
+      <div class="flex items-center gap-5 justify-between border-b pb-4 mb-4 border-gray-300/40">
+        <div class="flex items-center gap-4">
+          <img src="${f.image}" class="w-20 h-20 object-contain bg-white/50 p-1 rounded-xl shadow-sm"/>
+          <div>
+            <div class="text-2xl font-black text-gray-800 uppercase tracking-wide">${f.name}</div>
+            <div class="text-sm font-black text-gray-500 mt-1">${f.rarity} • ${f.flowerPack > 0 ? '🎁 Hoa gói' : '🪙 Hoa xu'}</div>
+          </div>
+        </div>
+        <button onclick="deleteFlower(${flowers.indexOf(f)})" class="bg-red-50 text-red-600 border border-red-200 font-black px-4 py-2 rounded-xl text-xs hover:bg-red-100">🗑️ Xóa bông này</button>
+      </div>
+      <div>
+        <div class="text-xs font-black uppercase text-gray-400 mb-2">Thành viên sở hữu bông này:</div>
+        <div class="space-y-2">
+          ${(f.owners && f.owners.length > 0) ? f.owners.map((owner, oIndex) => `
+            <div class="flex items-center justify-between bg-white/80 p-3 rounded-xl shadow-sm border border-pink-100">
+              <div>
+                <span class="font-black text-teal-900">🎮 ${owner.ingame}</span>
+                <span class="text-xs font-bold text-gray-500 ml-2">${owner.zalo ? `(💬 Zalo: ${owner.zalo})` : ''}</span>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="editMemberName(${flowers.indexOf(f)}, ${oIndex})" class="bg-yellow-400 text-black px-3 py-1 rounded-lg text-xs font-black shadow-sm">✏️ Sửa tên</button>
+                <button onclick="deleteMemberFromFlower(${flowers.indexOf(f)}, ${oIndex})" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs font-black shadow-sm">❌ Xóa người này</button>
+              </div>
+            </div>
+          `).join('') : '<p class="text-xs text-gray-400 italic font-bold">Chưa có ai sở hữu bông hoa này</p>'}
+        </div>
+      </div>
+    </div>`).join('');
 }
 
 function editMemberName(flowerIndex, ownerIndex) {
-  const currentOwner = flowers[flowerIndex].owners[ownerIndex];
-  const newIngame = prompt("Nhập tên Ingame mới:", currentOwner.ingame);
-  if (newIngame === null || newIngame.trim() === "") return;
-  const newZalo = prompt("Nhập tên Zalo mới (để trống nếu không đổi):", currentOwner.zalo || "");
-  
-  currentOwner.ingame = newIngame.trim();
-  currentOwner.zalo = newZalo ? newZalo.trim() : "";
-  
-  saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); alert("Đã cập nhật tên thành viên thành công! 🌸"); });
+  const currentOwner = flowers[flowerIndex].owners[ownerIndex];
+  const newIngame = prompt("Nhập tên Ingame mới:", currentOwner.ingame);
+  if (newIngame === null || newIngame.trim() === "") return;
+  const newZalo = prompt("Nhập tên Zalo mới (để trống nếu không đổi):", currentOwner.zalo || "");
+  
+  currentOwner.ingame = newIngame.trim();
+  currentOwner.zalo = newZalo ? newZalo.trim() : "";
+  
+  saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); alert("Đã cập nhật tên thành viên thành công! 🌸"); });
 }
 
 function deleteMemberFromFlower(flowerIndex, ownerIndex) {
-  const targetFlower = flowers[flowerIndex];
-  const memberName = targetFlower.owners[ownerIndex].ingame;
-  
-  if (confirm(`Bạn muốn xóa thành viên "${memberName}" khỏi bông hoa "${targetFlower.name.toUpperCase()}"?`)) {
-    targetFlower.owners.splice(ownerIndex, 1);
-    if (targetFlower.owners.length === 0) { flowers.splice(flowerIndex, 1); }
-    saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); alert("Đã xóa thành viên thành công! 🌸"); });
-  }
+  const targetFlower = flowers[flowerIndex];
+  const memberName = targetFlower.owners[ownerIndex].ingame;
+  
+  if (confirm(`Bạn muốn xóa thành viên "${memberName}" khỏi bông hoa "${targetFlower.name.toUpperCase()}"?`)) {
+    targetFlower.owners.splice(ownerIndex, 1);
+    if (targetFlower.owners.length === 0) { flowers.splice(flowerIndex, 1); }
+    saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); alert("Đã xóa thành viên thành công! 🌸"); });
+  }
 }
 
 function deleteFlower(index){
-  if(confirm('Xóa hoàn toàn hoa này và toàn bộ danh sách thành viên bên trong?')){
-    flowers.splice(index,1);
-    saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); });
-  }
+  if(confirm('Xóa hoàn toàn hoa này và toàn bộ danh sách thành viên bên trong?')){
+    flowers.splice(index,1);
+    saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); });
+  }
 }
 
 function clearAllFlowers(){
-  if(confirm('Bạn có chắc muốn xóa TOÀN BỘ dữ liệu?')){
-    flowers = []; localStorage.removeItem('dvdFlowers');
-    saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); alert('Đã xóa toàn bộ dữ liệu 🌸'); });
-  }
+  if(confirm('Bạn có chắc muốn xóa TOÀN BỘ dữ liệu?')){
+    flowers = []; localStorage.removeItem('dvdFlowers');
+    saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); alert('Đã xóa toàn bộ dữ liệu 🌸'); });
+  }
 }
 
 function compressImage(file, maxWidth, maxHeight, quality) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = function (e) {
-      const img = new Image();
-      img.src = e.target.result;
-      img.onload = function () {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-        if (width > height) {
-          if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
-        } else {
-          if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
-        }
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-    };
-    reader.onerror = error => reject(error);
-  });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = function (e) {
+      const img = new Image();
+      img.src = e.target.result;
+      img.onload = function () {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxWidth) { height = Math.round((height * maxWidth) / width); width = maxWidth; }
+        } else {
+          if (height > maxHeight) { width = Math.round((width * maxHeight) / height); height = maxHeight; }
+        }
+        canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+    };
+    reader.onerror = error => reject(error);
+  });
 }
 
 async function addFlower(){
-  const ingame = document.getElementById('memberName').value.trim();
-  const zalo = document.getElementById('memberZalo').value.trim();
-  const flowerName = document.getElementById('flowerName').value.trim();
-  const flowerType = document.getElementById('flowerType').value;
-  const rarity = document.getElementById('flowerRarity').value;
-  const imageFile = document.getElementById('flowerImage').files[0];
-  
-  if(!ingame || !flowerName){
-    alert("Vui lòng nhập đủ thông tin: Tên ingame và Tên hoa!");
-    return;
-  }
-  
-  const existingFlower = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
-  
-  if(existingFlower){
-    if(!existingFlower.owners) existingFlower.owners = [];
-    const isExist = existingFlower.owners.some(o => o.ingame.trim().toLowerCase() === ingame.toLowerCase());
-    if(!isExist){
-      existingFlower.owners.push({ ingame: ingame, zalo: zalo });
-    }
-    
-    await saveData();
-    document.getElementById('memberName').value = ""; 
-    document.getElementById('memberZalo').value = "";
-    renderSearch(); renderMembers(); renderAdminFlowers();
-    alert(`Đã thêm thành viên "${ingame}" vào bông hoa "${flowerName.toUpperCase()}" thành công! 🌸`);
-  } else {
-    if(!imageFile){
-      alert("Bông hoa này chưa tồn tại. Vui lòng chọn FILE ẢNH cho loại hoa mới này!");
-      return;
-    }
-    
-    try {
-      const compressedBase64 = await compressImage(imageFile, 400, 400, 0.7);
-      
-      flowers.push({
-        name: flowerName,
-        rarity: rarity,
-        image: compressedBase64,
-        flowerXu: flowerType === 'xu' ? 1 : 0,
-        flowerPack: flowerType === 'goi' ? 1 : 0,
-        owners: [{ ingame: ingame, zalo: zalo }]
-      });
-      
-      await saveData();
-      document.getElementById('memberName').value = ""; 
-      document.getElementById('memberZalo').value = "";
-      document.getElementById('flowerName').value = ""; 
-      document.getElementById('flowerImage').value = "";
-      renderSearch(); renderMembers(); renderAdminFlowers();
-      alert("Đã tạo mẫu hoa mới và thêm thành viên thành công! 🌸");
-    } catch (err) {
-      alert("Lỗi xử lý nén ảnh: " + err.message);
-    }
-  }
+  const ingame = document.getElementById('memberName').value.trim();
+  const zalo = document.getElementById('memberZalo').value.trim();
+  const flowerName = document.getElementById('flowerName').value.trim();
+  const flowerType = document.getElementById('flowerType').value;
+  const rarity = document.getElementById('flowerRarity').value;
+  const imageFile = document.getElementById('flowerImage').files[0];
+  
+  if(!ingame || !flowerName){
+    alert("Vui lòng nhập đủ thông tin: Tên ingame và Tên hoa!");
+    return;
+  }
+  
+  const existingFlower = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
+  
+  if(existingFlower){
+    if(!existingFlower.owners) existingFlower.owners = [];
+    const isExist = existingFlower.owners.some(o => o.ingame.trim().toLowerCase() === ingame.toLowerCase());
+    if(!isExist){
+      existingFlower.owners.push({ ingame: ingame, zalo: zalo });
+    }
+    
+    await saveData();
+    document.getElementById('memberName').value = ""; 
+    document.getElementById('memberZalo').value = "";
+    renderSearch(); renderMembers(); renderAdminFlowers();
+    alert(`Đã thêm thành viên "${ingame}" vào bông hoa "${flowerName.toUpperCase()}" thành công! 🌸`);
+  } else {
+    if(!imageFile){
+      alert("Bông hoa này chưa tồn tại. Vui lòng chọn FILE ẢNH cho loại hoa mới này!");
+      return;
+    }
+    
+    try {
+      const compressedBase64 = await compressImage(imageFile, 400, 400, 0.7);
+      
+      flowers.push({
+        name: flowerName,
+        rarity: rarity,
+        image: compressedBase64,
+        flowerXu: flowerType === 'xu' ? 1 : 0,
+        flowerPack: flowerType === 'goi' ? 1 : 0,
+        owners: [{ ingame: ingame, zalo: zalo }]
+      });
+      
+      await saveData();
+      document.getElementById('memberName').value = ""; 
+      document.getElementById('memberZalo').value = "";
+      document.getElementById('flowerName').value = ""; 
+      document.getElementById('flowerImage').value = "";
+      renderSearch(); renderMembers(); renderAdminFlowers();
+      alert("Đã tạo mẫu hoa mới và thêm thành viên thành công! 🌸");
+    } catch (err) {
+      alert("Lỗi xử lý nén ảnh: " + err.message);
+    }
+  }
 }
 </script>
 
@@ -441,24 +450,24 @@ async function addFlower(){
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 const firebaseConfig = {
-  apiKey: "AIzaSyAip9TsFQLFVYfTCafngZh81W6saGWqEvQ",
-  authDomain: "dvdhoa.firebaseapp.com",
-  projectId: "dvdhoa",
-  storageBucket: "dvdhoa.firebasestorage.app",
-  messagingSenderId: "895700989452",
-  appId: "1:895700989452:web:06ed440fbe3b6aafd1a029",
-  measurementId: "G-2MBFFLEKP3"
+  apiKey: "AIzaSyAip9TsFQLFVYfTCafngZh81W6saGWqEvQ",
+  authDomain: "dvdhoa.firebaseapp.com",
+  projectId: "dvdhoa",
+  storageBucket: "dvdhoa.firebasestorage.app",
+  messagingSenderId: "895700989452",
+  appId: "1:895700989452:web:06ed440fbe3b6aafd1a029",
+  measurementId: "G-2MBFFLEKP3"
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const dataRef = doc(db,"dvdflower","data");
 
 onSnapshot(dataRef,(snap)=>{
-  if(snap.exists()){
-    flowers = snap.data().flowers || [];
-    localStorage.setItem('dvdFlowers', JSON.stringify(flowers));
-    renderSearch(); renderMembers(); renderAdminFlowers();
-  }
+  if(snap.exists()){
+    flowers = snap.data().flowers || [];
+    localStorage.setItem('dvdFlowers', JSON.stringify(flowers));
+    renderSearch(); renderMembers(); renderAdminFlowers();
+  }
 });
 
 window.saveCloudData = async function(){ await setDoc(dataRef,{ flowers: flowers }); };
