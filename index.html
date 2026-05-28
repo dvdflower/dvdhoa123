@@ -132,7 +132,7 @@ function showSection(id){ document.querySelectorAll('.section').forEach(s=>s.cla
 function adminLogin(){ const pass = prompt("Nhập mật khẩu Admin"); if(pass === adminPass){ showSection('adminSection'); alert("Đăng nhập thành công 🌸"); }else{ alert("Sai mật khẩu"); } }
 function rarityClass(r){ switch(r){ case 'HOA ĐỎ': return 'rarity-red'; case 'HOA CAM': return 'rarity-orange'; case 'HOA TÍM': return 'rarity-purple'; case 'HOA LAM': return 'rarity-blue'; case 'HOA LỤC': return 'rarity-green'; default: return ''; } }
 
-function mergedFlowers(){
+function <script>{
   const map = {};
   flowers.forEach(f=>{
     if(!f || !f.name) return;
@@ -154,7 +154,7 @@ function mergedFlowers(){
   return Object.values(map);
 }
 
-function renderSearch(data=mergedFlowers()){
+function renderSearch(data=<script>){
   const grid = document.getElementById('searchGrid'); if(!grid) return;
   grid.innerHTML = data.map(f=>`
   <div onclick="showFlowerOwners('${f.name.replace(/'/g, "\\'")}')" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
@@ -170,14 +170,14 @@ function renderSearch(data=mergedFlowers()){
 
 function searchFlowers(){
   const key = document.getElementById('searchInput').value.toLowerCase().trim(); const rarity = document.getElementById('rarityFilter').value;
-  let data = mergedFlowers();
+  let data = <script>;
   if(key){ data = data.filter(f=> f.name.toLowerCase().includes(key) || (f.owners && f.owners.some(o=> o.ingame && o.toLowerCase().includes(key))) ); }
   if(rarity){ data = data.filter(f=> f.rarity === rarity); }
   renderSearch(data);
 }
 
 function showRarity(r){
-  const data = mergedFlowers().filter(f=>f.rarity===r); const grid = document.getElementById('rarityGrid'); if(!grid) return;
+  const data = <script>.filter(f=>f.rarity===r); const grid = document.getElementById('rarityGrid'); if(!grid) return;
   grid.innerHTML = data.map(f=>`
   <div onclick="showFlowerOwners('${f.name.replace(/'/g, "\\'")}')" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
     <div class="flex justify-center"><img src="${f.image}" class="flower-img w-28 h-28 object-contain"/></div>
@@ -190,7 +190,7 @@ function showRarity(r){
 
 function showMemberFlowers(memberName){
   const cleanSearchName = memberName.trim().toLowerCase();
-  const data = mergedFlowers().filter(f=> f.owners && f.owners.some(o => o.ingame && o.ingame.trim().toLowerCase() === cleanSearchName) );
+  const data = <script>.filter(f=> f.owners && f.owners.some(o => o.ingame && o.ingame.trim().toLowerCase() === cleanSearchName) );
   const htmlData = data.map(f=>`
     <div class="${rarityClass(f.rarity)} rounded-3xl p-4 shadow-lg">
       <div class="flex justify-center"><img src="${f.image}" class="w-24 h-24 object-contain"/></div>
@@ -203,7 +203,7 @@ function showMemberFlowers(memberName){
 function closeMemberModal(){ document.getElementById('memberFlowerModal').style.display='none'; }
 
 function showFlowerOwners(flowerName){
-  const targetFlower = mergedFlowers().find(f => f.name.trim().toUpperCase() === flowerName.trim().toUpperCase()); if(!targetFlower) return;
+  const targetFlower = <script>.find(f => f.name.trim().toUpperCase() === flowerName.trim().toUpperCase()); if(!targetFlower) return;
   document.getElementById('flowerOwnersSubTitle').innerText = `Hoa: ${targetFlower.name.toUpperCase()} (${targetFlower.rarity})`;
   const htmlData = (targetFlower.owners || []).map(o => `
     <div class="owner-box rounded-2xl p-4 shadow-sm bg-white border border-pink-100">
@@ -238,22 +238,60 @@ function renderMembers(){
     </button>`).join('');
 }
 
-function renderAdminFlowers(){
-  const list = document.getElementById('adminFlowerList'); if(!list) return;
-  list.innerHTML = flowers.map((f,index)=>`
-    <div class="${rarityClass(f.rarity)} rounded-3xl p-5 shadow-lg">
+function renderAdminFlowers() {
+  const list = document.getElementById('adminFlowerList');
+  if (!list) return;
+
+  list.innerHTML = flowers.map((f, fIndex) => `
+    <div class="${rarityClass(f.rarity)} rounded-3xl p-5 shadow-lg mb-4 border border-white/50">
       <div class="flex items-center gap-4">
-        <img src="${f.image}" class="w-16 h-16 object-contain"/>
+        <img src="${f.image}" class="w-16 h-16 object-contain rounded-xl"/>
         <div class="flex-1 min-w-0">
-          <div class="text-xl font-black uppercase truncate">${f.name}</div>
-          <div class="mt-1 font-bold text-teal-800 text-sm truncate">🎮 Chủ: ${f.owners && f.owners[0] ? f.owners[0].ingame : ''}</div>
+          <div class="text-xl font-black uppercase text-[#5f412e]">${f.name}</div>
+          <div class="text-sm font-bold text-teal-800">Có ${f.owners ? f.owners.length : 0} người sở hữu:</div>
         </div>
       </div>
-      <div class="flex gap-2 mt-4">
-        <button onclick="editFlower(${index})" class="flex-1 bg-yellow-400 text-black py-2 rounded-xl font-black text-sm">✏️ Sửa</button>
-        <button onclick="deleteFlower(${index})" class="flex-1 bg-red-500 text-white py-2 rounded-xl font-black text-sm">🗑️ Xóa</button>
+      
+      <div class="mt-4 grid gap-2">
+        ${(f.owners || []).map((o, oIndex) => `
+          <div class="flex justify-between items-center bg-white/60 p-3 rounded-xl shadow-sm">
+            <div class="text-sm min-w-0">
+              <div class="font-bold truncate">🎮 ${o.ingame}</div>
+              <div class="text-xs text-gray-600 truncate">💬 ${o.zalo || 'Chưa có Zalo'}</div>
+            </div>
+            <button onclick="editMember(${fIndex}, ${oIndex})" class="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-blue-600 ml-2">Sửa</button>
+          </div>
+        `).join('')}
       </div>
-    </div>`).join('');
+
+      <div class="mt-4 flex gap-2">
+        <button onclick="deleteFlower(${fIndex})" class="flex-1 bg-red-500 text-white py-2 rounded-xl font-black text-sm">🗑️ Xóa cả hoa</button>
+      </div>
+    </div>
+  `).join('');
+}
+  // Đặt đoạn code này sau hàm renderAdminFlowers()
+function editMember(flowerIndex, ownerIndex) {
+  const f = flowers[flowerIndex];
+  const owner = f.owners[ownerIndex];
+
+  const newIngame = prompt('Nhập tên ingame mới:', owner.ingame);
+  if (newIngame === null) return;
+
+  const newZalo = prompt('Nhập tên Zalo mới:', owner.zalo || '');
+  if (newZalo === null) return;
+
+  // Cập nhật thông tin
+  f.owners[ownerIndex].ingame = newIngame.trim();
+  f.owners[ownerIndex].zalo = newZalo.trim();
+
+  // Lưu và cập nhật lại giao diện
+  saveData().then(() => {
+    renderSearch();
+    renderMembers();
+    renderAdminFlowers();
+    alert('Đã cập nhật thông tin thành viên thành công! 🌸');
+  });
 }
 
 function deleteFlower(index){ if(confirm('Xóa hoa này?')){ flowers.splice(index,1); saveData(); renderSearch(); renderMembers(); renderAdminFlowers(); } }
