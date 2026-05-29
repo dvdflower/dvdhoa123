@@ -169,17 +169,44 @@
     }
 
     // --- TÍNH NĂNG ADMIN ĐƯỢC CHÈN THÊM ---
-    function renderAdminFlowers() {
-      document.getElementById('adminFlowerList').innerHTML = flowers.map((f, fIdx) => `
-        <div class="${rarityClass(f.rarity)} rounded-3xl p-5 shadow-lg mb-4">
-          <div class="flex gap-4">
-             <img src="${f.image}" class="w-20 h-20 rounded-xl cursor-pointer" onclick="editImg(${fIdx})">
-             <div><div class="font-black text-lg">${f.name}</div><button onclick="editInfo(${fIdx})" class="text-xs bg-yellow-500 px-2 py-1 rounded">Sửa tên</button></div>
+  function renderAdminFlowers() {
+  document.getElementById('adminFlowerList').innerHTML = flowers.map((f, fIdx) => `
+    <div class="${rarityClass(f.rarity)} rounded-3xl p-5 shadow-lg mb-4">
+      <div class="flex gap-4 items-center">
+         <img src="${f.image}" class="w-20 h-20 rounded-xl cursor-pointer object-cover" onclick="editImg(${fIdx})">
+         <div>
+            <div class="font-black text-lg">${f.name}</div>
+            <button onclick="editInfo(${fIdx})" class="text-xs bg-yellow-500 px-3 py-1 rounded font-bold mt-1">Sửa Tên Hoa</button>
+         </div>
+      </div>
+      <div class="mt-3 grid gap-2">
+        ${f.owners.map((o, oIdx) => `
+          <div class="flex justify-between items-center bg-white/60 p-3 rounded-xl text-sm shadow-sm">
+            <span class="font-bold">🎮 ${o.ingame}</span>
+            <div class="flex gap-2">
+                <button onclick="editMemName(${fIdx}, ${oIdx})" class="text-blue-600 font-bold hover:underline">Sửa</button>
+                <button onclick="delMem(${fIdx}, ${oIdx})" class="text-red-600 font-bold hover:underline">Xóa</button>
+            </div>
           </div>
-          <div class="mt-3 grid gap-1">${f.owners.map((o, oIdx) => `<div class="flex justify-between bg-white/60 p-2 rounded-xl text-sm"><span>🎮 ${o.ingame}</span><button onclick="delMem(${fIdx}, ${oIdx})" class="text-red-600 font-bold">Xóa</button></div>`).join('')}</div>
-          <button onclick="delFlow(${fIdx})" class="mt-3 w-full bg-red-600 text-white py-1 rounded-xl text-xs font-black">🗑️ Xóa bông hoa</button>
-        </div>`).join('');
+        `).join('')}
+      </div>
+      <button onclick="delFlow(${fIdx})" class="mt-4 w-full bg-red-600 text-white py-2 rounded-xl text-sm font-black">🗑️ Xóa toàn bộ bông hoa này</button>
+    </div>
+  `).join('');
+}
+
+// Thêm hàm này vào dưới các hàm quản lý khác của bạn
+function editMemName(fi, oi) {
+    const newName = prompt("Nhập tên Ingame mới cho " + flowers[fi].owners[oi].ingame + ":", flowers[fi].owners[oi].ingame);
+    if (newName && newName.trim() !== "") {
+        flowers[fi].owners[oi].ingame = newName.trim();
+        saveData();
+        renderAdminFlowers();
+        // Cập nhật lại các trang hiển thị khác nếu cần
+        if(window.renderSearch) renderSearch();
+        if(window.renderMembers) renderMembers();
     }
+}
     function editInfo(i) { const n = prompt("Tên mới:", flowers[i].name); if(n) { flowers[i].name=n; saveData(); renderAdminFlowers(); } }
     function editImg(i) { const input = document.createElement('input'); input.type='file'; input.onchange=e=>{ const r=new FileReader(); r.onload=ev=>{flowers[i].image=ev.target.result; saveData(); renderAdminFlowers();}; r.readAsDataURL(e.target.files[0]); }; input.click(); }
     function delMem(fi, oi) { if(confirm("Xóa thành viên?")) { flowers[fi].owners.splice(oi, 1); saveData(); renderAdminFlowers(); } }
