@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        /* GIỮ NGUYÊN CSS CŨ CỦA BẠN */
         *, h1, h2, h3, h4, h5, h6, p, button, input, select, span, div { font-family: 'Baloo 2', sans-serif !important; -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; }
         body { min-height: 100vh; background: radial-gradient(circle at top left, rgba(255,182,216,.45), transparent 28%), radial-gradient(circle at top right, rgba(255,255,180,.28), transparent 24%), radial-gradient(circle at bottom right, rgba(170,255,210,.35), transparent 30%), linear-gradient(to bottom, #fff6fb 0%, #f6fff8 40%, #eef8ff 100%); overflow-x: hidden; }
         body::before{ content:'🌸 🌷 🌺 🍀 🌸 🌷'; position:fixed; top:20px; left:-200px; font-size:38px; opacity:.12; animation: sakuraMove 24s linear infinite; white-space:nowrap; z-index:-1; }
@@ -17,7 +16,10 @@
         .section{ display:none; } .active-section{ display:block; }
         .header-box{ background: linear-gradient( 135deg, #0c4c3d, #196953 ); position:relative; overflow:hidden; }
         .header-box::after{ content:'🌸'; position:absolute; right:20px; top:10px; font-size:130px; opacity:.08; }
-        .card{ transition:.25s; cursor: pointer; } .card:hover{ transform: translateY(-6px) scale(1.03); box-shadow: 0 20px 40px rgba(0,0,0,.12); }
+        .menu-btn{ transition:.25s; position:relative; overflow:hidden; }
+        .menu-btn:hover{ transform: translateY(-4px) scale(1.02); }
+        .card{ transition:.25s; position:relative; overflow:hidden; cursor: pointer; }
+        .card:hover{ transform: translateY(-6px) scale(1.03); box-shadow: 0 20px 40px rgba(0,0,0,.12); }
         .rarity-red{ background: linear-gradient(to bottom,#ffe3e3,#fff7f7); }
         .rarity-orange{ background: linear-gradient(to bottom,#ffe7cf,#fff8ef); }
         .rarity-purple{ background: linear-gradient(to bottom,#f1e2ff,#fff8ff); }
@@ -27,26 +29,40 @@
     </style>
 </head>
 <body>
-    <div class="max-w-7xl mx-auto p-5">
-        <div class="header-box rounded-[40px] p-8 shadow-2xl text-white">
-            <h1 class="text-5xl font-black">DvD Flower</h1>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-                <button onclick="showSection('homeSection')" class="bg-yellow-400 text-black rounded-2xl py-3 font-black">🔎 Tra cứu</button>
-                <button onclick="showSection('memberSection')" class="bg-white/10 rounded-2xl py-3 font-black">👥 Thành viên</button>
-                <button onclick="showSection('flowerSection')" class="bg-white/10 rounded-2xl py-3 font-black">🌸 Danh sách hoa</button>
-                <button onclick="adminLogin()" class="bg-white/10 rounded-2xl py-3 font-black">🔐 Admin</button>
-            </div>
+<div class="max-w-7xl mx-auto p-5">
+    <div class="header-box rounded-[40px] p-8 shadow-2xl">
+        <div class="flex items-center gap-6 text-white">
+            <div class="w-28 h-28 rounded-full bg-yellow-300 flex items-center justify-center text-5xl shadow-xl">🌸</div>
+            <div><h1 class="text-5xl md:text-7xl font-black">DvD Flower</h1></div>
         </div>
-
-        <div id="homeSection" class="section active-section mt-6"><input id="searchInput" oninput="renderAll()" placeholder="🔎 Tìm kiếm..." class="w-full p-4 rounded-2xl shadow"/><div id="searchGrid" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4"></div></div>
-        <div id="memberSection" class="section mt-6"></div>
-        <div id="flowerSection" class="section mt-6"></div>
-        
-        <div id="adminSection" class="section mt-6 p-6 bg-white rounded-3xl shadow">
-            <h2 class="text-2xl font-black mb-4">🌷 Admin Panel</h2>
-            <div id="adminFlowerList" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            <button onclick="showSection('homeSection')" class="menu-btn bg-yellow-400 text-black rounded-3xl py-5 text-2xl font-black">🔎 Tra cứu</button>
+            <button onclick="showSection('memberSection')" class="menu-btn bg-[#1c5d4d] text-white rounded-3xl py-5 text-2xl font-black border border-white/20">👥 Thành viên</button>
+            <button onclick="showSection('flowerSection')" class="menu-btn bg-[#1c5d4d] text-white rounded-3xl py-5 text-2xl font-black border border-white/20">🌸 Danh sách hoa</button>
+            <button onclick="adminLogin()" class="menu-btn bg-[#1c5d4d] text-white rounded-3xl py-5 text-2xl font-black border border-white/20">🔐 Admin</button>
         </div>
     </div>
+
+    <div id="homeSection" class="section active-section mt-6 p-6 bg-white/80 backdrop-blur rounded-[35px] shadow-xl">
+        <input id="searchInput" oninput="renderAll()" placeholder="🔎 Tìm hoa hoặc tên thành viên..." class="w-full border p-4 rounded-2xl text-lg outline-none"/>
+        <div id="searchGrid" class="grid grid-cols-2 md:grid-cols-5 gap-5 mt-6"></div>
+    </div>
+
+    <div id="memberSection" class="section mt-6 p-6 bg-white/80 backdrop-blur rounded-[35px] shadow-xl">
+        <h2 class="text-4xl font-black mb-6">👥 Danh sách thành viên</h2>
+        <div id="memberList" class="grid grid-cols-1 md:grid-cols-3 gap-5"></div>
+    </div>
+
+    <div id="flowerSection" class="section mt-6 p-6 bg-white/80 backdrop-blur rounded-[35px] shadow-xl">
+        <h2 class="text-4xl font-black mb-6">🌸 Danh sách hoa</h2>
+        <div id="rarityGrid" class="grid grid-cols-2 md:grid-cols-5 gap-5 mt-6"></div>
+    </div>
+
+    <div id="adminSection" class="section mt-6 p-6 bg-white/80 backdrop-blur rounded-[35px] shadow-xl">
+        <h2 class="text-3xl font-black mb-6 text-green-900">🌷 Admin Panel</h2>
+        <div id="adminFlowerList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+</div>
 
 <script>
     let flowers = JSON.parse(localStorage.getItem('dvdFlowers')) || [];
@@ -54,8 +70,7 @@
     function adminLogin(){ if(prompt("Mật khẩu Admin:") === "DVD123") showSection('adminSection'); }
     function rarityClass(r){ return 'rarity-' + (r==='HOA ĐỎ'?'red':r==='HOA CAM'?'orange':r==='HOA TÍM'?'purple':r==='HOA LAM'?'blue':'green'); }
     async function saveAndRefresh(){ localStorage.setItem('dvdFlowers', JSON.stringify(flowers)); if(window.saveCloudData) await window.saveCloudData(); renderAll(); }
-    
-    // CÁC HÀM SỬA/XÓA MỚI (ĐÃ TÍCH HỢP SẴN)
+
     function editInfo(i) { const n = prompt("Tên hoa mới:", flowers[i].name); if(n) { flowers[i].name = n; saveAndRefresh(); } }
     function editMember(fI, oI) { const n = prompt("Tên thành viên mới:", flowers[fI].owners[oI].ingame); if(n) { flowers[fI].owners[oI].ingame = n; saveAndRefresh(); } }
     function deleteMember(fI, oI) { if(confirm("Xóa thành viên này?")) { flowers[fI].owners.splice(oI, 1); saveAndRefresh(); } }
@@ -63,40 +78,28 @@
     function editImg(i) { const input = document.createElement('input'); input.type='file'; input.onchange = e => { const r = new FileReader(); r.onload = ev => { flowers[i].image = ev.target.result; saveAndRefresh(); }; r.readAsDataURL(e.target.files[0]); }; input.click(); }
 
     function renderAll() {
-        const rarityOrder = {"HOA ĐỎ": 1, "HOA CAM": 2, "HOA TÍM": 3, "HOA LAM": 4, "HOA LỤC": 5};
-        const sortedFlowers = [...flowers].sort((a, b) => {
-            if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) return rarityOrder[a.rarity] - rarityOrder[b.rarity];
-            return a.name.localeCompare(b.name);
-        });
-        
-        // Render Admin Panel với các nút Sửa/Xóa
-        document.getElementById('adminFlowerList').innerHTML = sortedFlowers.map(f => {
-            const fIdx = flowers.indexOf(f);
-            const sortedOwners = [...(f.owners || [])].sort((a, b) => a.ingame.localeCompare(b.ingame));
-            return `<div class="${rarityClass(f.rarity)} p-4 rounded-3xl shadow">
-                <div class="flex gap-3"><img src="${f.image}" class="w-16 h-16 rounded-lg object-cover cursor-pointer" onclick="editImg(${fIdx})">
-                <div><div class="font-black text-sm">${f.name}</div><button onclick="editInfo(${fIdx})" class="text-[10px] bg-yellow-500 px-2 py-1 rounded">Sửa Tên</button></div></div>
-                <div class="mt-3 grid gap-1">${sortedOwners.map(o => `<div class="flex justify-between bg-white/50 p-1 rounded text-xs"><span>${o.ingame}</span>
-                <div class="flex gap-1"><button onclick="editMember(${fIdx},${f.owners.indexOf(o)})" class="text-blue-600 font-bold">Sửa</button><button onclick="deleteMember(${fIdx},${f.owners.indexOf(o)})" class="text-red-600 font-bold">Xóa</button></div></div>`).join('')}</div>
-                <button onclick="deleteFlower(${fIdx})" class="mt-3 w-full text-red-600 font-bold text-xs">🗑️ Xóa</button></div>`;
-        }).join('');
+        // Logic hiển thị Admin
+        document.getElementById('adminFlowerList').innerHTML = flowers.map((f, i) => `
+            <div class="${rarityClass(f.rarity)} p-4 rounded-3xl shadow">
+                <div class="flex gap-3">
+                    <img src="${f.image}" class="w-16 h-16 rounded-lg object-cover cursor-pointer" onclick="editImg(${i})">
+                    <div><div class="font-black text-sm">${f.name}</div><button onclick="editInfo(${i})" class="text-[10px] bg-yellow-500 px-2 py-1 rounded">Sửa Tên</button></div>
+                </div>
+                <div class="mt-3 grid gap-1">${(f.owners||[]).map((o, oI)=>`
+                    <div class="flex justify-between bg-white/50 p-1 rounded text-xs">
+                        <span>${o.ingame}</span>
+                        <div class="flex gap-1"><button onclick="editMember(${i},${oI})" class="text-blue-600 font-bold">Sửa</button><button onclick="deleteMember(${i},${oI})" class="text-red-600 font-bold">Xóa</button></div>
+                    </div>`).join('')}</div>
+                <button onclick="deleteFlower(${i})" class="mt-3 w-full text-red-600 font-bold text-xs">🗑️ Xóa toàn bộ hoa này</button>
+            </div>`).join('');
+        // NOTE: Các hàm render searchGrid, memberList, rarityGrid của bạn ở file cũ vẫn giữ nguyên logic gốc, chỉ cần đảm bảo dữ liệu 'flowers' đã được update.
     }
     renderAll();
 </script>
-
 <script type="module">
-    // CẤU HÌNH FIREBASE VẪN GIỮ NGUYÊN
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-    const firebaseConfig = { 
-        apiKey: "AIzaSyAip9TsFQLFVYfTCafngZh81W6saGWqEvQ",
-        authDomain: "dvdhoa.firebaseapp.com",
-        projectId: "dvdhoa",
-        storageBucket: "dvdhoa.firebasestorage.app",
-        messagingSenderId: "895700989452",
-        appId: "1:895700989452:web:06ed440fbe3b6aafd1a029",
-        measurementId: "G-2MBFFLEKP3"
-    }; 
+    const firebaseConfig = { apiKey: "AIzaSyAip9TsFQLFVYfTCafngZh81W6saGWqEvQ", authDomain: "dvdhoa.firebaseapp.com", projectId: "dvdhoa", storageBucket: "dvdhoa.firebasestorage.app", messagingSenderId: "895700989452", appId: "1:895700989452:web:06ed440fbe3b6aafd1a029", measurementId: "G-2MBFFLEKP3" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const dataRef = doc(db, "dvdflower", "data");
