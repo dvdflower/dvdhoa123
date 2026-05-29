@@ -30,8 +30,6 @@
         .modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; justify-content:center; align-items:center; z-index:999; }
         .modal-content{ background: linear-gradient( to bottom, white, #fff8fb ); box-shadow: 0 25px 50px rgba(0,0,0,.2); }
         .owner-box{ background: linear-gradient( to right, white, #fff7fb ); border: 1px solid #ffd9eb; }
-        ::-webkit-scrollbar{ width:10px; }
-        ::-webkit-scrollbar-thumb{ background:#ffb7d5; border-radius:20px; }
         h1, h2, h3, .font-black { font-weight: 800 !important; }
     </style>
 </head>
@@ -92,7 +90,7 @@
             <button onclick="addFlower()" class="bg-yellow-400 text-black px-8 py-4 rounded-2xl font-black text-xl shadow-lg">➕ Thêm dữ liệu</button>
             <button onclick="clearAllFlowers()" class="bg-red-500 text-white px-8 py-4 rounded-2xl font-black text-xl shadow-lg">🗑️ Xóa toàn bộ</button>
         </div>
-        <hr class="my-8"><h3 class="text-3xl font-black mb-5">📦 Dữ liệu kho hoa (Admin quản lý)</h3>
+        <hr class="my-8"><h3 class="text-3xl font-black mb-5">📦 Dữ liệu kho hoa</h3>
         <div id="adminFlowerList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
     <div id="memberFlowerModal" class="modal"><div class="modal-content rounded-[35px] p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"><div class="flex justify-between items-center mb-5"><h2 class="text-3xl font-black">🌸 Hoa thành viên</h2><button onclick="closeMemberModal()" class="bg-red-500 text-white px-4 py-2 rounded-xl">Đóng</button></div><div id="memberFlowerContent" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div></div></div>
@@ -102,7 +100,7 @@
     let flowers = []; const adminPass = "DVD123"; const rarityOrder = { 'HOA ĐỎ': 1, 'HOA CAM': 2, 'HOA TÍM': 3, 'HOA LAM': 4, 'HOA LỤC': 5 };
     async function saveData(){ localStorage.setItem('dvdFlowers', JSON.stringify(flowers)); if(window.saveCloudData) await window.saveCloudData(); }
     function showSection(id){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); }
-    function adminLogin(){ const pass = prompt("Nhập mật khẩu Admin"); if(pass === adminPass) showSection('adminSection'); else alert("Sai mật khẩu"); }
+    function adminLogin(){ const pass = prompt("Nhập mật khẩu Admin"); if(pass === adminPass){ showSection('adminSection'); } else { alert("Sai mật khẩu"); } }
     function rarityClass(r){ return 'rarity-' + (r==='HOA ĐỎ'?'red':r==='HOA CAM'?'orange':r==='HOA TÍM'?'purple':r==='HOA LAM'?'blue':'green'); }
 
     function getMergedFlowers(){
@@ -115,7 +113,6 @@
       return Object.values(map).sort((a,b) => (rarityOrder[a.rarity]||6) - (rarityOrder[b.rarity]||6) || a.name.localeCompare(b.name));
     }
 
-    // Các hàm render gốc giữ nguyên
     function renderSearch(data=getMergedFlowers()){
       const grid = document.getElementById('searchGrid'); if(!grid) return;
       grid.innerHTML = data.map(f=>`
@@ -168,69 +165,43 @@
         const members = {};
         flowers.forEach(f => f.owners.forEach(o => members[o.ingame.trim().toLowerCase()] = o));
         document.getElementById('memberList').innerHTML = Object.values(members).sort((a,b)=>a.ingame.localeCompare(b.ingame)).map(m=>`
-            <button onclick="showMemberFlowers('${m.ingame.replace(/'/g, "\\'")}')" class="owner-box rounded-3xl p-5 text-left shadow"><div class="text-2xl font-black text-[#1c5d4d]">🎮 ${m.ingame}</div><div class="text-gray-600">💬 ${m.zalo||'Không zalo'}</div></button>`).join('');
+            <button onclick="showMemberFlowers('${m.ingame.replace(/'/g, "\\'")}')" class="owner-box rounded-3xl p-5 text-left shadow"><div class="text-2xl font-black text-[#1c5d4d]">🎮 ${m.ingame}</div><div class="text-gray-600">💬 ${m.zalo||'Không có zalo'}</div></button>`).join('');
     }
 
-    // --- TÍNH NĂNG ADMIN MỚI ---
+    // --- TÍNH NĂNG ADMIN ĐƯỢC CHÈN THÊM ---
     function renderAdminFlowers() {
       document.getElementById('adminFlowerList').innerHTML = flowers.map((f, fIdx) => `
-        <div class="${rarityClass(f.rarity)} rounded-3xl p-4 shadow-lg">
+        <div class="${rarityClass(f.rarity)} rounded-3xl p-5 shadow-lg mb-4">
           <div class="flex gap-4">
-             <img src="${f.image}" class="w-20 h-20 rounded-xl cursor-pointer" onclick="editImg(${fIdx})" title="Nhấn để đổi ảnh">
-             <div>
-                <div class="font-black text-lg">${f.name}</div>
-                <button onclick="editFlowerName(${fIdx})" class="text-xs bg-yellow-500 px-2 py-1 rounded">Sửa Tên Hoa</button>
-             </div>
+             <img src="${f.image}" class="w-20 h-20 rounded-xl cursor-pointer" onclick="editImg(${fIdx})">
+             <div><div class="font-black text-lg">${f.name}</div><button onclick="editInfo(${fIdx})" class="text-xs bg-yellow-500 px-2 py-1 rounded">Sửa tên</button></div>
           </div>
-          <div class="mt-3 grid gap-1">
-            ${f.owners.map((o, oIdx) => `
-              <div class="flex justify-between items-center bg-white/50 p-2 rounded-lg text-sm">
-                <span>🎮 ${o.ingame}</span>
-                <button onclick="deleteMember(${fIdx}, ${oIdx})" class="text-red-500 font-bold">Xóa</button>
-              </div>`).join('')}
-          </div>
-          <button onclick="deleteFlower(${fIdx})" class="mt-4 w-full bg-red-600 text-white py-1 rounded-xl text-xs font-bold">🗑️ Xóa toàn bộ bông hoa này</button>
+          <div class="mt-3 grid gap-1">${f.owners.map((o, oIdx) => `<div class="flex justify-between bg-white/60 p-2 rounded-xl text-sm"><span>🎮 ${o.ingame}</span><button onclick="delMem(${fIdx}, ${oIdx})" class="text-red-600 font-bold">Xóa</button></div>`).join('')}</div>
+          <button onclick="delFlow(${fIdx})" class="mt-3 w-full bg-red-600 text-white py-1 rounded-xl text-xs font-black">🗑️ Xóa bông hoa</button>
         </div>`).join('');
     }
-
-    function editImg(i) {
-        const input = document.createElement('input'); input.type='file';
-        input.onchange = e => {
-            const reader = new FileReader();
-            reader.onload = ev => { flowers[i].image = ev.target.result; saveData().then(() => { renderSearch(); renderAdminFlowers(); }); };
-            reader.readAsDataURL(e.target.files[0]);
-        }; input.click();
-    }
-
-    function editFlowerName(i) {
-        const n = prompt("Tên hoa mới:", flowers[i].name);
-        if(n) { flowers[i].name = n; saveData().then(() => { renderSearch(); renderAdminFlowers(); }); }
-    }
-
-    function deleteMember(fI, oI) {
-        if(confirm("Xóa thành viên này khỏi hoa?")) { flowers[fI].owners.splice(oI, 1); saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); }); }
-    }
-    
-    // Giữ nguyên các hàm cũ
-    function deleteFlower(index){ if(confirm('Xóa toàn bộ hoa này?')){ flowers.splice(index,1); saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); }); } }
-    function clearAllFlowers(){ if(confirm('Chắc chắn xóa TẤT CẢ?')){ flowers = []; localStorage.removeItem('dvdFlowers'); saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); }); } }
+    function editInfo(i) { const n = prompt("Tên mới:", flowers[i].name); if(n) { flowers[i].name=n; saveData(); renderAdminFlowers(); } }
+    function editImg(i) { const input = document.createElement('input'); input.type='file'; input.onchange=e=>{ const r=new FileReader(); r.onload=ev=>{flowers[i].image=ev.target.result; saveData(); renderAdminFlowers();}; r.readAsDataURL(e.target.files[0]); }; input.click(); }
+    function delMem(fi, oi) { if(confirm("Xóa thành viên?")) { flowers[fi].owners.splice(oi, 1); saveData(); renderAdminFlowers(); } }
+    function delFlow(i) { if(confirm("Xóa hoa này?")) { flowers.splice(i, 1); saveData(); renderAdminFlowers(); } }
+    function clearAllFlowers(){ if(confirm('Xóa hết?')){ flowers=[]; saveData(); renderAdminFlowers(); } }
     function addFlower(){
         const ingame = document.getElementById('memberName').value.trim();
         const zalo = document.getElementById('memberZalo').value.trim();
         const flowerName = document.getElementById('flowerName').value.trim();
-        const imageFile = document.getElementById('flowerImage').files[0];
-        if(!ingame || !flowerName){ alert("Thiếu thông tin!"); return; }
+        const img = document.getElementById('flowerImage').files[0];
+        if(!ingame || !flowerName) return alert("Thiếu info!");
         const exist = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
-        if(exist) { exist.owners.push({ ingame, zalo }); saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); }); }
+        if(exist) { exist.owners.push({ ingame, zalo }); saveData(); renderAdminFlowers(); alert('Đã cập nhật!'); }
         else {
-            if(!imageFile) return alert("Chọn ảnh!");
-            const reader = new FileReader();
-            reader.onload = e => { flowers.push({ name: flowerName, rarity: document.getElementById('flowerRarity').value, image: e.target.result, flowerXu: document.getElementById('flowerType').value === 'xu' ? 1 : 0, owners: [{ ingame, zalo }] }); saveData().then(() => { renderSearch(); renderMembers(); renderAdminFlowers(); }); };
-            reader.readAsDataURL(imageFile);
+            if(!img) return alert("Chọn ảnh!");
+            const r = new FileReader(); r.onload = e => { flowers.push({ name: flowerName, rarity: document.getElementById('flowerRarity').value, image: e.target.result, flowerXu: document.getElementById('flowerType').value === 'xu' ? 1 : 0, owners: [{ ingame, zalo }] }); saveData(); renderAdminFlowers(); alert("Đã thêm!"); };
+            r.readAsDataURL(img);
         }
     }
+    // Gọi các hàm render khi load
+    window.addEventListener('load', () => { renderSearch(); renderMembers(); renderAdminFlowers(); });
 </script>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
