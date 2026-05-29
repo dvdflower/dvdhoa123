@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>DvD Flower</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Baloo 2 hỗ trợ tốt tiếng Việt -->
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         /* Ép font chữ cho toàn bộ các thành phần */
@@ -50,7 +49,9 @@
         .owner-box{ background: linear-gradient( to right, white, #fff7fb ); border: 1px solid #ffd9eb; }
         ::-webkit-scrollbar{ width:10px; }
         ::-webkit-scrollbar-thumb{ background:#ffb7d5; border-radius:20px; }
-        h1, h2, h3, .font-black { font-weight: 900 !important; }
+        
+        /* Giới hạn font-weight ở mức 800 để máy tính không bị vỡ nét chữ */
+        h1, h2, h3, .font-black { font-weight: 800 !important; }
     </style>
 </head>
 <body>
@@ -81,7 +82,7 @@
                 <option>HOA LAM</option>
                 <option>HOA LỤC</option>
             </select>
-            <div class="bg-[#f7f7f7] rounded-2xl p-4 font-black text-xl">🌸 Tổng loại hoa: <span id="totalFlowers">0</span></div>
+            <div class="bg-[#f7f7f7] rounded-2xl p-4 font-black text-xl">🌸 Tổng loại hoa: <span id="totalFlowers" class="text-pink-600">0</span></div>
         </div>
         <div id="searchGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-5 mt-6"></div>
     </div>
@@ -160,13 +161,19 @@
       return Object.values(map).sort((a, b) => (rarityOrder[a.rarity] || 6) - (rarityOrder[b.rarity] || 6) || a.name.localeCompare(b.name));
     }
 
+    // Đã chỉnh sửa hoàn thiện kết cấu hiển thị card, bo tròn thanh nhãn hoa và khôi phục dòng đếm người sở hữu
     function renderSearch(data=getMergedFlowers()){
       const grid = document.getElementById('searchGrid'); if(!grid) return;
       grid.innerHTML = data.map(f=>`
-      <div onclick="showFlowerOwners('${f.name.replace(/'/g, "\'")}')" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
-        <div class="flex justify-center"><img src="${f.image}" class="flower-img w-32 h-32 object-contain"/></div>
-        <h2 class="text-center text-xl font-black text-[#5f412e] mt-4 break-words px-1">${f.name.toUpperCase()}</h2>
-        <div class="mt-3 text-center text-xs font-bold text-gray-700">${f.flowerXu ? '🪙 Hoa xu' : '🎁 Hoa gói'}</div>
+      <div onclick="showFlowerOwners('${f.name.replace(/'/g, "\\'")}')" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg flex flex-col justify-between">
+        <div>
+          <div class="flex justify-center"><img src="${f.image}" class="flower-img w-32 h-32 object-contain"/></div>
+          <h2 class="text-center text-xl font-black text-[#5f412e] mt-4 break-words px-1 leading-tight">${f.name.toUpperCase()}</h2>
+        </div>
+        <div class="mt-3 space-y-1 text-center">
+          ${f.flowerXu ? `<div class="bg-white/80 py-1.5 rounded-full font-bold shadow text-sm text-gray-700 mx-4">🪙 Hoa xu</div>` : `<div class="bg-white/80 py-1.5 rounded-full font-bold shadow text-sm text-gray-700 mx-4">🎁 Hoa gói</div>`}
+          <div class="text-xs text-pink-600 font-bold mt-1.5">Người sở hữu: ${f.owners ? f.owners.length : 0} 🌸</div>
+        </div>
       </div>`).join('');
       const totalEl = document.getElementById('totalFlowers'); if(totalEl) totalEl.innerText = data.length;
     }
@@ -182,9 +189,14 @@
     function showRarity(r){
       const data = getMergedFlowers().filter(f=>f.rarity===r); const grid = document.getElementById('rarityGrid'); if(!grid) return;
       grid.innerHTML = data.map(f=>`
-      <div onclick="showFlowerOwners('${f.name.replace(/'/g, "\'")}')" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg">
-        <div class="flex justify-center"><img src="${f.image}" class="flower-img w-28 h-28 object-contain"/></div>
-        <h2 class="text-center text-lg font-black mt-4 text-[#5f412e] break-words">${f.name.toUpperCase()}</h2>
+      <div onclick="showFlowerOwners('${f.name.replace(/'/g, "\\'")}')" class="${rarityClass(f.rarity)} card rounded-[30px] p-4 shadow-lg flex flex-col justify-between">
+        <div>
+          <div class="flex justify-center"><img src="${f.image}" class="flower-img w-28 h-28 object-contain"/></div>
+          <h2 class="text-center text-lg font-black mt-4 text-[#5f412e] break-words leading-tight">${f.name.toUpperCase()}</h2>
+        </div>
+        <div class="mt-3 space-y-1 text-center">
+          ${f.flowerXu ? `<div class="bg-white/60 py-1 rounded-full font-bold shadow text-xs text-gray-700 mx-2">🪙 Hoa xu</div>` : `<div class="bg-white/60 py-1 rounded-full font-bold shadow text-xs text-gray-700 mx-2">🎁 Hoa gói</div>`}
+        </div>
       </div>`).join('');
     }
 
@@ -193,9 +205,12 @@
       const data = getMergedFlowers().filter(f=> f.owners && f.owners.some(o => o.ingame && o.ingame.trim().toLowerCase() === cleanSearchName) )
         .sort((a, b) => (rarityOrder[a.rarity] || 6) - (rarityOrder[b.rarity] || 6) || a.name.localeCompare(b.name));
       const htmlData = data.map(f=>`
-        <div class="${rarityClass(f.rarity)} rounded-3xl p-4 shadow-lg">
-          <div class="flex justify-center"><img src="${f.image}" class="w-24 h-24 object-contain"/></div>
-          <h3 class="text-center font-black text-md mt-3 text-[#5f412e] break-words">${f.name.toUpperCase()}</h3>
+        <div class="${rarityClass(f.rarity)} rounded-3xl p-4 shadow-lg flex flex-col justify-between">
+          <div>
+            <div class="flex justify-center"><img src="${f.image}" class="w-24 h-24 object-contain"/></div>
+            <h3 class="text-center font-black text-md mt-3 text-[#5f412e] break-words leading-tight">${f.name.toUpperCase()}</h3>
+          </div>
+          <div class="mt-2 text-center text-xs font-bold text-gray-500">${f.flowerXu ? '🪙 Hoa xu' : '🎁 Hoa gói'}</div>
         </div>`).join('');
       document.getElementById('memberFlowerContent').innerHTML = htmlData || '<p class="text-center col-span-2 text-gray-500">Thành viên này hiện chưa sở hữu hoa.</p>';
       document.getElementById('memberFlowerModal').style.display='flex';
@@ -225,7 +240,7 @@
       });
       const list = document.getElementById('memberList'); if(!list) return;
       list.innerHTML = Object.values(members).sort((a, b) => a.ingame.localeCompare(b.ingame)).map(m=>`
-        <button onclick="showMemberFlowers('${m.ingame.replace(/'/g, "\'")}')" class="owner-box rounded-3xl p-5 text-left shadow">
+        <button onclick="showMemberFlowers('${m.ingame.replace(/'/g, "\\'")}')" class="owner-box rounded-3xl p-5 text-left shadow">
           <div class="text-2xl font-black text-[#1c5d4d]">🎮 ${m.ingame}</div>
           <div class="mt-2 text-gray-600">💬 ${m.zalo || 'Không có zalo'}</div>
         </button>`).join('');
