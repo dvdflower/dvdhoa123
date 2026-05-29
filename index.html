@@ -3,26 +3,21 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>DvD Flower Management</title>
+    <title>DvD Flower - Quản Lý</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        *, h1, h2, h3, h4, h5, h6, p, button, input, select, span, div { font-family: 'Baloo 2', sans-serif !important; -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; }
-        body { min-height: 100vh; background: radial-gradient(circle at top left, rgba(255,182,216,.45), transparent 28%), radial-gradient(circle at top right, rgba(255,255,180,.28), transparent 24%), radial-gradient(circle at bottom right, rgba(170,255,210,.35), transparent 30%), linear-gradient(to bottom, #fff6fb 0%, #f6fff8 40%, #eef8ff 100%); overflow-x: hidden; }
-        body::before{ content:'🌸 🌷 🌺 🍀 🌸 🌷'; position:fixed; top:20px; left:-200px; font-size:38px; opacity:.12; animation: sakuraMove 24s linear infinite; white-space:nowrap; z-index:-1; }
-        body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; right:-220px; font-size:34px; opacity:.1; animation: sakuraMove2 28s linear infinite; white-space:nowrap; z-index:-1; }
+        *, h1, h2, h3, h4, h5, h6, p, button, input, select, span, div { font-family: 'Baloo 2', sans-serif !important; }
+        body { min-height: 100vh; background: radial-gradient(circle at top left, rgba(255,182,216,.45), transparent 28%), radial-gradient(circle at bottom right, rgba(170,255,210,.35), transparent 30%), linear-gradient(to bottom, #fff6fb 0%, #eef8ff 100%); overflow-x: hidden; }
+        .section { display:none; } .active-section { display:block; }
+        body::before{ content:'🌸 🌷 🌺 🍀 🌸'; position:fixed; top:20px; left:-200px; font-size:38px; opacity:.12; animation: sakuraMove 24s linear infinite; z-index:-1; }
         @keyframes sakuraMove{ 0%{ transform:translateX(0); } 100%{ transform:translateX(130vw); } }
-        @keyframes sakuraMove2{ 0%{ transform:translateX(0); } 100%{ transform:translateX(-130vw); } }
-        .section{ display:none; } .active-section{ display:block; }
-        .header-box{ background: linear-gradient( 135deg, #0c4c3d, #196953 ); position:relative; overflow:hidden; }
-        .header-box::after{ content:'🌸'; position:absolute; right:20px; top:10px; font-size:130px; opacity:.08; }
-        .card{ transition:.25s; cursor: pointer; } .card:hover{ transform: translateY(-6px) scale(1.03); }
-        .rarity-red{ background: linear-gradient(to bottom,#ffe3e3,#fff7f7); }
-        .rarity-orange{ background: linear-gradient(to bottom,#ffe7cf,#fff8ef); }
-        .rarity-purple{ background: linear-gradient(to bottom,#f1e2ff,#fff8ff); }
-        .rarity-blue{ background: linear-gradient(to bottom,#dff1ff,#f7fcff); }
-        .rarity-green{ background: linear-gradient(to bottom,#ddffe6,#f6fff8); }
-        h1, h2, h3, .font-black { font-weight: 800 !important; }
+        .header-box { background: linear-gradient(135deg, #0c4c3d, #196953); }
+        .rarity-red { background: linear-gradient(to bottom,#ffe3e3,#fff7f7); }
+        .rarity-orange { background: linear-gradient(to bottom,#ffe7cf,#fff8ef); }
+        .rarity-purple { background: linear-gradient(to bottom,#f1e2ff,#fff8ff); }
+        .rarity-blue { background: linear-gradient(to bottom,#dff1ff,#f7fcff); }
+        .rarity-green { background: linear-gradient(to bottom,#ddffe6,#f6fff8); }
     </style>
 </head>
 <body>
@@ -31,24 +26,27 @@
         <h1 class="text-5xl font-black">DvD Flower</h1>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
             <button onclick="showSection('homeSection')" class="bg-yellow-400 text-black rounded-2xl py-3 font-black">🔎 Tra cứu</button>
-            <button onclick="adminLogin()" class="bg-white/10 rounded-2xl py-3 font-black">🔐 Admin</button>
+            <button onclick="showSection('memberSection')" class="bg-[#1c5d4d] border border-white/20 rounded-2xl py-3 font-black">👥 Thành viên</button>
+            <button onclick="showSection('flowerSection')" class="bg-[#1c5d4d] border border-white/20 rounded-2xl py-3 font-black">🌸 Danh sách hoa</button>
+            <button onclick="adminLogin()" class="bg-[#1c5d4d] border border-white/20 rounded-2xl py-3 font-black">🔐 Admin</button>
         </div>
     </div>
 
-    <div id="homeSection" class="section active-section mt-6"><input id="searchInput" oninput="renderAll()" placeholder="🔎 Tìm kiếm..." class="w-full p-4 rounded-2xl shadow"/><div id="searchGrid" class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4"></div></div>
-    
-    <div id="adminSection" class="section mt-6 p-6 bg-white rounded-3xl shadow">
-        <h2 class="text-2xl font-black mb-4">🌷 Admin Panel</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-4">
-            <input id="inName" placeholder="Tên ingame" class="border p-2 rounded-lg"/>
-            <input id="inZalo" placeholder="Tên zalo" class="border p-2 rounded-lg"/>
-            <input id="flName" placeholder="Tên hoa" class="border p-2 rounded-lg"/>
-            <select id="flType" class="border p-2 rounded-lg"><option value="xu">Hoa xu</option><option value="goi">Hoa gói</option></select>
-            <select id="flRarity" class="border p-2 rounded-lg"><option>HOA ĐỎ</option><option>HOA CAM</option><option>HOA TÍM</option><option>HOA LAM</option><option>HOA LỤC</option></select>
-            <input id="flImg" type="file" class="border p-2 rounded-lg"/>
+    <div id="homeSection" class="section active-section mt-6"><input id="searchInput" oninput="renderAll()" placeholder="🔎 Tìm tên hoa hoặc thành viên..." class="w-full border p-4 rounded-2xl mb-4 shadow-sm"/><div id="searchGrid" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div></div>
+    <div id="memberSection" class="section mt-6"><h2 class="text-3xl font-black mb-4">👥 Danh sách thành viên</h2><div id="memberList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div></div>
+    <div id="flowerSection" class="section mt-6"><h2 class="text-3xl font-black mb-4">🌸 Danh sách hoa</h2><div id="rarityGrid" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div></div>
+    <div id="adminSection" class="section mt-6 p-6 bg-white rounded-3xl shadow-lg border">
+        <h2 class="text-3xl font-black mb-6">🌷 Admin Panel</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <input id="inName" placeholder="Tên ingame" class="border p-3 rounded-xl"/>
+            <input id="inZalo" placeholder="Tên zalo" class="border p-3 rounded-xl"/>
+            <input id="flName" placeholder="Tên hoa" class="border p-3 rounded-xl"/>
+            <select id="flType" class="border p-3 rounded-xl"><option value="xu">Hoa xu</option><option value="goi">Hoa gói</option></select>
+            <select id="flRarity" class="border p-3 rounded-xl"><option>HOA ĐỎ</option><option>HOA CAM</option><option>HOA TÍM</option><option>HOA LAM</option><option>HOA LỤC</option></select>
+            <input id="flImg" type="file" class="border p-3 rounded-xl"/>
         </div>
-        <button onclick="addFlower()" class="bg-yellow-400 px-6 py-2 rounded-xl font-bold">➕ Thêm hoa mới</button>
-        <div id="adminFlowerList" class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6"></div>
+        <button onclick="addFlower()" class="bg-yellow-400 px-8 py-3 rounded-xl font-black mb-8">➕ Thêm hoa mới</button>
+        <div id="adminFlowerList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </div>
 </div>
 
@@ -79,7 +77,6 @@
             if (rarityOrder[a.rarity] !== rarityOrder[b.rarity]) return rarityOrder[a.rarity] - rarityOrder[b.rarity];
             return a.name.localeCompare(b.name);
         });
-        
         document.getElementById('adminFlowerList').innerHTML = sortedFlowers.map(f => {
             const fIdx = flowers.indexOf(f);
             const sortedOwners = [...(f.owners || [])].sort((a, b) => a.ingame.localeCompare(b.ingame));
@@ -89,7 +86,7 @@
                     <img src="${f.image}" class="w-16 h-16 rounded-lg object-cover cursor-pointer" onclick="editImg(${fIdx})">
                     <div><div class="font-black text-sm">${f.name}</div><button onclick="editInfo(${fIdx})" class="text-[10px] bg-yellow-500 px-2 py-1 rounded">Sửa Tên</button></div>
                 </div>
-                <div class="mt-3 grid gap-1">${sortedOwners.map((o, oI)=>`
+                <div class="mt-3 grid gap-1">${sortedOwners.map(o => `
                     <div class="flex justify-between bg-white/50 p-1 rounded text-xs">
                         <span>${o.ingame}</span>
                         <div class="flex gap-1"><button onclick="editMember(${fIdx},${f.owners.indexOf(o)})" class="text-blue-600 font-bold">Sửa</button><button onclick="deleteMember(${fIdx},${f.owners.indexOf(o)})" class="text-red-600 font-bold">Xóa</button></div>
