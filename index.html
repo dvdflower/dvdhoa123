@@ -3,92 +3,127 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>DvD Flower - Full System</title>
+    <title>DvD Flower</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        .section { display:none; } .active-section { display:block; }
-        .card { transition:.25s; cursor: pointer; }
-        .card:hover { transform: translateY(-6px) scale(1.03); }
-        .modal { position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; justify-content:center; align-items:center; z-index:999; }
+        *, h1, h2, h3, h4, h5, h6, p, button, input, select, span, div { font-family: 'Baloo 2', sans-serif !important; -webkit-font-smoothing: antialiased !important; -moz-osx-font-smoothing: grayscale !important; }
+        body { min-height: 100vh; background: radial-gradient(circle at top left, rgba(255,182,216,.45), transparent 28%), radial-gradient(circle at top right, rgba(255,255,180,.28), transparent 24%), radial-gradient(circle at bottom right, rgba(170,255,210,.35), transparent 30%), linear-gradient(to bottom, #fff6fb 0%, #f6fff8 40%, #eef8ff 100%); overflow-x: hidden; }
+        body::before{ content:'🌸 🌷 🌺 🍀 🌸 🌷'; position:fixed; top:20px; left:-200px; font-size:38px; opacity:.12; animation: sakuraMove 24s linear infinite; white-space:nowrap; z-index:-1; }
+        body::after{ content:'🌷 🌸 🍃 🌺 🌷'; position:fixed; bottom:40px; right:-220px; font-size:34px; opacity:.1; animation: sakuraMove2 28s linear infinite; white-space:nowrap; z-index:-1; }
+        @keyframes sakuraMove{ 0%{ transform:translateX(0); } 100%{ transform:translateX(130vw); } }
+        @keyframes sakuraMove2{ 0%{ transform:translateX(0); } 100%{ transform:translateX(-130vw); } }
+        .section{ display:none; } .active-section{ display:block; }
+        .header-box{ background: linear-gradient( 135deg, #0c4c3d, #196953 ); position:relative; overflow:hidden; }
+        .header-box::after{ content:'🌸'; position:absolute; right:20px; top:10px; font-size:130px; opacity:.08; }
+        .menu-btn{ transition:.25s; position:relative; overflow:hidden; }
+        .menu-btn:hover{ transform: translateY(-4px) scale(1.02); }
+        .card{ transition:.25s; position:relative; overflow:hidden; cursor: pointer; }
+        .card:hover{ transform: translateY(-6px) scale(1.03); box-shadow: 0 20px 40px rgba(0,0,0,.12); }
+        .rarity-red{ background: linear-gradient(to bottom,#ffe3e3,#fff7f7); }
+        .rarity-orange{ background: linear-gradient(to bottom,#ffe7cf,#fff8ef); }
+        .rarity-purple{ background: linear-gradient(to bottom,#f1e2ff,#fff8ff); }
+        .rarity-blue{ background: linear-gradient(to bottom,#dff1ff,#f7fcff); }
+        .rarity-green{ background: linear-gradient(to bottom,#ddffe6,#f6fff8); }
+        .flower-img{ filter: drop-shadow(0 10px 15px rgba(0,0,0,.18)); transition:.25s; }
+        .card:hover .flower-img{ transform:scale(1.08); }
+        .modal{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; justify-content:center; align-items:center; z-index:999; }
+        .modal-content{ background: linear-gradient( to bottom, white, #fff8fb ); box-shadow: 0 25px 50px rgba(0,0,0,.2); }
+        .owner-box{ background: linear-gradient( to right, white, #fff7fb ); border: 1px solid #ffd9eb; }
+        h1, h2, h3, .font-black { font-weight: 800 !important; }
     </style>
 </head>
 <body>
-
 <div class="max-w-7xl mx-auto p-5">
-    <div id="adminSection" class="section active-section">
-        <h2 class="text-3xl font-black mb-4">🌷 Admin Panel - Quản Lý Kho Hoa</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-100 p-6 rounded-2xl">
-            <input id="memberName" placeholder="Tên ingame" class="p-3 border rounded-xl"/>
-            <input id="flowerName" placeholder="Tên hoa" class="p-3 border rounded-xl"/>
-            <select id="flowerRarity" class="p-3 border rounded-xl"><option>HOA ĐỎ</option><option>HOA CAM</option></select>
-            <input id="flowerImage" type="file" class="p-3"/>
-            <button onclick="addFlower()" class="bg-green-600 text-white p-3 rounded-xl font-bold">➕ Thêm Hoa</button>
-        </div>
-        <div id="adminFlowerList" class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6"></div>
-    </div>
-</div>
-
-<script>
-    let flowers = [];
-    
-    // HÀM THÊM HOA (Firebase)
-    async function addFlower() {
-        const name = document.getElementById('flowerName').value;
-        const imgInput = document.getElementById('flowerImage');
-        if(!imgInput.files[0]) return alert("Chọn ảnh!");
-        
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-            const data = { 
-                name: name, 
-                rarity: document.getElementById('flowerRarity').value,
-                image: e.target.result,
-                owners: [{ ingame: document.getElementById('memberName').value }]
-            };
-            await window.addFlowerToCloud(data);
-            alert("Đã thêm thành công!");
-        };
-        reader.readAsDataURL(imgInput.files[0]);
-    }
-
-    // HÀM XÓA HOA
-    async function delFlow(id) {
-        if(confirm("Xóa hoa này?")) await window.deleteFlowerFromCloud(id);
-    }
-
-    // HÀM RENDER ADMIN
-    function renderAdminFlowers() {
-        const list = document.getElementById('adminFlowerList');
-        list.innerHTML = flowers.map(f => `
-            <div class="bg-white p-4 rounded-2xl shadow">
-                <img src="${f.image}" class="w-full h-32 object-cover rounded-xl">
-                <p class="font-bold mt-2">${f.name}</p>
-                <button onclick="delFlow('${f.id}')" class="bg-red-500 text-white w-full py-2 mt-2 rounded-lg">Xóa</button>
+    <div class="header-box rounded-[40px] p-8 shadow-2xl">
+        <div class="flex items-center gap-6">
+            <div class="w-28 h-28 rounded-full bg-yellow-300 flex items-center justify-center text-5xl shadow-xl">🌸</div>
+            <div>
+                <h1 class="text-5xl md:text-7xl font-black text-white">DvD Flower</h1>
+                <p class="text-green-100 mt-3 text-xl">Hội Yêu Hoa Cỏ - Trích Máu Nuôi Hoa</p>
             </div>
-        `).join('');
-    }
-</script>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+            <button onclick="showSection('homeSection')" class="menu-btn bg-yellow-400 text-black rounded-3xl py-5 text-2xl font-black shadow-lg">🔎 Tra cứu</button>
+            <button onclick="showSection('memberSection')" class="menu-btn bg-[#1c5d4d] text-white rounded-3xl py-5 text-2xl font-black shadow-lg">👥 Thành viên</button>
+            <button onclick="showSection('flowerSection')" class="menu-btn bg-[#1c5d4d] text-white rounded-3xl py-5 text-2xl font-black shadow-lg">🌸 Danh sách hoa</button>
+            <button onclick="adminLogin()" class="menu-btn bg-[#1c5d4d] text-white rounded-3xl py-5 text-2xl font-black shadow-lg">🔐 Admin</button>
+        </div>
+    </div>
+    
+    <script>
+        let flowers = []; const adminPass = "DVD123"; const rarityOrder = { 'HOA ĐỎ': 1, 'HOA CAM': 2, 'HOA TÍM': 3, 'HOA LAM': 4, 'HOA LỤC': 5 };
+        
+        // HÀM ADMIN
+        function showSection(id){ document.querySelectorAll('.section').forEach(s=>s.classList.remove('active-section')); document.getElementById(id).classList.add('active-section'); }
+        function adminLogin(){ const pass = prompt("Nhập mật khẩu Admin"); if(pass === adminPass){ showSection('adminSection'); } else { alert("Sai mật khẩu"); } }
+        function rarityClass(r){ return 'rarity-' + (r==='HOA ĐỎ'?'red':r==='HOA CAM'?'orange':r==='HOA TÍM'?'purple':r==='HOA LAM'?'blue':'green'); }
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        // RENDER LOGIC (Kết nối với Firebase qua biến flowers toàn cục)
+        function getMergedFlowers(){
+            const map = {};
+            flowers.forEach((f)=>{
+                const key = f.name.trim().toUpperCase();
+                if(!map[key]) map[key] = { ...f, owners: [] };
+                if(f.owners) f.owners.forEach(o => map[key].owners.push(o));
+            });
+            return Object.values(map).sort((a,b) => (rarityOrder[a.rarity]||6) - (rarityOrder[b.rarity]||6) || a.name.localeCompare(b.name));
+        }
 
-    const db = getFirestore(initializeApp({
-        apiKey: "AIzaSyArdShAGDqUhY0wWRlGLO_FZRuabG4BNOs",
-        projectId: "dvdflowers",
-        storageBucket: "dvdflowers.firebasestorage.app"
-    }));
+        // CÁC HÀM CẬP NHẬT DỮ LIỆU
+        async function addFlower() {
+            const ingame = document.getElementById('memberName').value.trim();
+            const zalo = document.getElementById('memberZalo').value.trim();
+            const flowerName = document.getElementById('flowerName').value.trim();
+            const imgInput = document.getElementById('flowerImage');
+            
+            if(!ingame || !flowerName) return alert("Thiếu info!");
+            const exist = flowers.find(f => f.name.trim().toUpperCase() === flowerName.toUpperCase());
 
-    const col = collection(db, "flowers");
+            if(exist) {
+                exist.owners.push({ ingame, zalo });
+                await window.updateFlowerInCloud(exist.id, { owners: exist.owners });
+                alert('Đã cập nhật thành viên!');
+            } else {
+                if(!imgInput.files[0]) return alert("Chọn ảnh!");
+                const r = new FileReader();
+                r.onload = async e => {
+                    await window.addFlowerToCloud({ 
+                        name: flowerName, rarity: document.getElementById('flowerRarity').value, 
+                        image: e.target.result, flowerXu: document.getElementById('flowerType').value === 'xu' ? 1 : 0, 
+                        owners: [{ ingame, zalo }] 
+                    });
+                    alert("Đã thêm hoa mới!");
+                };
+                r.readAsDataURL(imgInput.files[0]);
+            }
+        }
+        // ... (Bạn giữ các hàm renderSearch, searchFlowers, showRarity, showMemberFlowers, showFlowerOwners, renderMembers, renderAdminFlowers như cũ)
+    </script>
 
-    onSnapshot(col, (snap) => {
-        flowers = [];
-        snap.forEach(d => flowers.push({ id: d.id, ...d.data() }));
-        renderAdminFlowers();
-    });
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-    window.addFlowerToCloud = async (d) => await addDoc(col, d);
-    window.deleteFlowerFromCloud = async (id) => await deleteDoc(doc(db, "flowers", id));
-</script>
+        const db = getFirestore(initializeApp({
+            apiKey: "AIzaSyArdShAGDqUhY0wWRlGLO_FZRuabG4BNOs",
+            projectId: "dvdflowers",
+            storageBucket: "dvdflowers.firebasestorage.app"
+        }));
+        const flowersCol = collection(db, "flowers");
+
+        onSnapshot(flowersCol, (snap) => {
+            flowers = [];
+            snap.forEach(d => flowers.push({ id: d.id, ...d.data() }));
+            if(window.renderSearch) renderSearch();
+            if(window.renderMembers) renderMembers();
+            if(window.renderAdminFlowers) renderAdminFlowers();
+        });
+
+        window.addFlowerToCloud = async (d) => await addDoc(flowersCol, d);
+        window.deleteFlowerFromCloud = async (id) => await deleteDoc(doc(db, "flowers", id));
+        window.updateFlowerInCloud = async (id, d) => await updateDoc(doc(db, "flowers", id), d);
+    </script>
+</div>
 </body>
 </html>
